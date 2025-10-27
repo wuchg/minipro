@@ -33,19 +33,7 @@
 			}
 		},
 		{
-			"path": "pages/conversations/conversations",
-			"style": {
-				"navigationBarTitleText": ""
-			}
-		},
-		{
 			"path": "pages/login/login",
-			"style": {
-				"navigationBarTitleText": ""
-			}
-		},
-		{
-			"path": "pages/contact/contact",
 			"style": {
 				"navigationBarTitleText": ""
 			}
@@ -79,68 +67,51 @@
 			"style": {
 				"navigationBarTitleText": ""
 			}
-		}
-	],
-	"subPackages": [{
-		"root": "TUIKit",
-		"pages": [{
-				"path": "components/TUIConversation/index",
-				"style": {
-					"navigationBarTitleText": "聊天"
-				}
-			},
-			{
-				"path": "components/TUIChat/index",
-				"style": {
-					"navigationBarTitleText": "腾讯云 IM",
-					"app-plus": {
-						"softinputMode": "adjustResize",
-						"titleNView": {
-							"buttons": [{
-								"type": "menu"
-							}]
-						}
-					},
-					"h5": {
-						"titleNView": {
-							"buttons": []
-						}
+		},
+		{
+			"path": "components/TUIConversation/index",
+			"style": {
+				"navigationBarTitleText": "聊天"
+			}
+		}, {
+			"path": "components/TUIChat/index",
+			"style": {
+				"navigationBarTitleText": "腾讯云 IM",
+				"app-plus": {
+					"softinputMode": "adjustResize",
+					"titleNView": {
+						"buttons": [{
+							"type": "menu"
+						}]
+					}
+				},
+				"h5": {
+					"titleNView": {
+						"buttons": []
 					}
 				}
-			},
-			// 集成 chat 组件，必须配置该路径: 视频播放
-			{
-				"path": "components/TUIChat/video-play",
-				"style": {
-					"navigationBarTitleText": "腾讯云 IM"
-				}
-			},
-			{
-				"path": "components/TUIChat/web-view",
-				"style": {
-					"navigationBarTitleText": "腾讯云 IM"
-				}
-			},
-			{
-				"path": "components/TUIContact/index",
-				"style": {
-					"navigationBarTitleText": ""
-				}
-			},
-			{
-				"path": "components/TUIGroup/index",
-				"style": {
-					"navigationBarTitleText": "腾讯云 IM"
-				}
-			},
-			{
-				"path": "components/TUISearch/index",
-				"style": {
-					"navigationBarTitleText": "聊天记录"
-				}
 			}
-		]
-	}],
+		},
+		// 集成 chat 组件，必须配置该路径: 视频播放
+		{
+			"path": "components/TUIChat/video-play",
+			"style": {
+				"navigationBarTitleText": "腾讯云 IM"
+			}
+		},
+		{
+			"path": "components/TUIChat/web-view",
+			"style": {
+				"navigationBarTitleText": "腾讯云 IM"
+			}
+		},
+		{
+			"path": "components/TUISearch/index",
+			"style": {
+				"navigationBarTitleText": "聊天记录"
+			}
+		}
+	],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "uni-app",
@@ -160,7 +131,7 @@
 				// "selectedIconPath": "static/icons/home_active.png"
 			},
 			{
-				"pagePath": "pages/conversations/conversations",
+				"pagePath": "components/TUIConversation/index",
 				"text": "Чат"
 				// "iconPath": "static/icons/chat.png",
 				// "selectedIconPath": "static/icons/chat_active.png"
