@@ -1,306 +1,239 @@
 <template>
 	<view class="page">
-		<view class="top">
-			<view>
-				<text class="order-no">订单号：{{ order.orderNo }}</text>
-				<text class="order-time">下单时间：{{ order.createdAt }}</text>
-			</view>
-		</view>
+		<scroll-view scroll-y class="timeline-wrapper">
+			<!-- 左侧竖线 -->
+			<view class="timeline-line"></view>
+			<view v-for="(item, idx) in timeline" :key="idx" class="timeline-item" :class="[item.status]">
+				<!-- dot -->
+				<view class="dot"></view>
 
-		<scroll-view class="content" scroll-y>
-			<view class="section  car-section">
-				<!-- 左边缩略图 -->
-				<view class="car-left">
-					<image :src="order.thumb" class="thumb" mode="aspectFill"></image>
-				</view>
-				<!-- 中间 summary -->
-				<view class="car-center">
-					<text class="summary">{{ order.title }}</text>
-				</view>
-
-				<!-- 右边 价格 + 数量 -->
-				<view class="car-right">
-					<text class="price">$ {{ (order.total/100).toFixed(2) }}</text>
-					<text class="quantity">x{{ order.quantity }}</text>
-				</view>
-			</view>
-
-			<view class="section">
-				<view class="section-title">物流信息</view>
-
-				<view class="track-list">
-					<view v-for="(t, idx) in tracks" :key="idx" class="track-item">
-						<view class="track-left">
-							<view class="circle" :class="{ active: idx === 0 }"></view>
-							<view class="line" v-if="idx !== tracks.length - 1"></view>
-						</view>
-						<view class="track-right">
-							<text class="track-time">{{ t.time }}</text>
-							<text class="track-desc">{{ t.desc }}</text>
+				<view class="content">
+					<!-- 阶段名称 + 箭头 -->
+					<view class="item-title-wrapper" @tap="toggleCard(idx)">
+						<text class="item-title">{{ item.title }}</text>
+						<text class="collapse-icon-text">{{ item.open ? '▲' : '▼' }}</text>
+					</view>
+					<text class="item-time">{{ item.time }}</text>
+					<!-- 卡片内容 -->
+					<view class="card" v-show="item.open">
+						<view class="card-content">
+							<!-- <text class="desc">{{ item.desc }}</text> -->
+							<image v-if="item.img" :src="item.img" mode="widthFix" class="card-img"></image>
+							<video v-if="item.video" :src="item.video" controls class="card-video"></video>
+							<text v-if="item.file" class="card-file" :class="{ 'disabled-file': !item.downloadable }" @tap="item.downloadable && downloadFile(item.fileUrl)">
+								{{ item.file }}
+								<text v-if="item.downloadable">⬇️</text>
+							</text>
 						</view>
 					</view>
 				</view>
-			</view>
-
-			<view class="section">
-				<view class="section-title">收货信息</view>
-				<text>姓名：张三</text>
-				<text>手机：138****1234</text>
-				<text>地址：北京市海淀区示例路 100 号</text>
-			</view>
-
-			<view class="section">
-				<view class="section-title">订单备注</view>
-				<text>请尽量在工作日送货，若无人签收请放到前台代收。</text>
 			</view>
 		</scroll-view>
 	</view>
 </template>
 
 <script>
-	const BASE = 'http://127.0.0.1:8888/api'
-
-	export default {
-		data() {
-			return {
-				orderNo: '',
-				order: {},
-				tracks: [{
-						time: '2025-09-08 10:12',
-						desc: '包裹已签收，签收人：李先生'
-					},
-					{
-						time: '2025-09-07 18:02',
-						desc: '配送中，快递：顺丰，运单号：SF123456789'
-					},
-					{
-						time: '2025-09-07 08:15',
-						desc: '包裹到达配送中心：北京市分拨中心'
-					},
-					{
-						time: '2025-09-06 14:20',
-						desc: '包裹已出库，仓库处理完成'
-					},
-					{
-						time: '2025-09-05 09:00',
-						desc: '已发货，快递公司揽件'
-					}
-				]
-			}
+import { request } from '@/common/request.js';
+export default {
+	data() {
+		return {
+			orderId: null,
+			timeline: []
+		};
+	},
+	onLoad(query) {
+		this.orderId = query.orderId || null;
+		this.trackOrder(this.orderId);
+	},
+	methods: {
+		toggleCard(idx) {
+			this.timeline[idx].open = !this.timeline[idx].open;
 		},
-		onLoad(query) {
-			this.orderNo = query.orderNo;
-			this.fetchOrderBasiceInfo(this.orderNo);
-			this.fetchOrderDetail(this.orderNo)
+		trackOrder(orderId) {
+			request({
+				url: '/orders/' + orderId
+			}).then((res) => {
+				if (res.code === 0) {
+					const trackRecords = res.data.stages;
+					trackRecords?.map((it) => {
+						this.timeline.push({
+							title: it.stageLabel,
+							time: it.createdAt,
+							desc: it.stageLabel,
+							img: it.img ? 'https://img.autoboss.cloud' + it.img : null,
+							video: it.video ? 'https://img.autoboss.cloud' + it.video : null,
+							file: it.file ? 'https://img.autoboss.cloud' + it.file : null,
+							fileName: it.fileName,
+							status: it.createdAt === '' ? 'future' : 'completed',
+							open: it.createdAt === '' ? false : true
+						});
+					});
+				} else {
+					uni.showToast({
+						title: res.msg || '加载失败',
+						icon: 'none'
+					});
+					return;
+				}
+			});
 		},
-		methods: {
-			fetchOrderBasiceInfo(orderNo) {
-				if (this.loading) return
-				this.loading = true
-				const url = `${BASE}/order`
-				uni.request({
-					url: url,
-					method: 'GET',
-					success: (res) => {
-						if (!res || !res.data) {
-							uni.showToast({
-								title: '服务器返回异常',
-								icon: 'none'
-							})
-							return
-						}
-						const body = res.data
-						if (body.code !== 0) {
-							uni.showToast({
-								title: body.msg || '加载失败',
-								icon: 'none'
-							})
-							return
-						}
-						const order = body.data
-						const id = order.id
-						this.order = {
-							id: 'ORD' + order.id,
-							orderNo: 'SN' + String(100000 + id),
-							createdAt: order.createdAt,
-							total: (150000 + (id * 1000)), // 分
-							thumb: `/static/cars/${order.car.thumbnail}`,
-							title: order.car.name + order.car.name + order.car.name + order.car.name +
-								order.car.name + order.car.name,
-							quantity: 1,
-							status: order.status
-						}
-					},
-					fail: (err) => {
-
-					},
-					complete: () => {
-						this.loading = false
+		// 下载并打开文件
+		downloadFile(fileUrl) {
+			uni.downloadFile({
+				url: fileUrl,
+				success: (res) => {
+					if (res.statusCode === 200) {
+						// 打开文档（微信小程序、App 生效）
+						uni.openDocument({
+							filePath: res.tempFilePath,
+							showMenu: true,
+							success: () => {
+								console.log('打开文档成功');
+							}
+						});
 					}
-				})
-			},
-			fetchOrderDetail(orderNo) {
-
-
-			}
+				},
+				fail: (err) => {
+					uni.showToast({
+						title: '下载失败',
+						icon: 'none'
+					});
+					console.error('下载失败', err);
+				}
+			});
 		}
 	}
+};
 </script>
 
 <style>
-	.page {
-		height: 100vh;
-		background: #f5f6f8;
-	}
+.page {
+	background: #f4f6fa;
+	height: 100vh;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+}
 
-	.top {
-		background: #fff;
-		padding: 28rpx;
-		border-bottom: 1rpx solid #eee;
-	}
+.timeline-wrapper {
+	padding-left: 40rpx;
+	position: relative;
+	flex: 1;
+	overflow: hidden;
+}
 
-	.title {
-		font-size: 34rpx;
-		font-weight: bold;
-	}
+/* 左侧整条竖线 */
+.timeline-line {
+	position: absolute;
+	left: 12rpx;
+	/* dot 中心 */
+	top: 0;
+	bottom: 0;
+	width: 4rpx;
+	background: #ccc;
+	z-index: 0;
+}
 
-	.order-time {
-		font-size: 22rpx;
-		color: #999;
-		margin-top: 6rpx;
-		display: block;
-	}
+.timeline-item {
+	position: relative;
+	display: flex;
+	margin-bottom: 40rpx;
+	z-index: 1;
+}
 
-	.order-price {
-		font-size: 30rpx;
-		color: #FF6B00;
-		font-weight: bold;
-	}
+.dot {
+	width: 24rpx;
+	height: 24rpx;
+	border-radius: 50%;
+	background: #0078d7;
+	position: absolute;
+	left: 0;
+	top: 0;
+	z-index: 1;
+}
 
-	.orderno {
-		font-size: 22rpx;
-		color: #888;
-		margin-top: 8rpx;
-	}
+.timeline-item.completed .dot {
+	background: #b0b0b0;
+}
 
-	.content {
-		padding: 18rpx;
-		height: calc(100vh - 120rpx);
-	}
+.timeline-item.future .dot {
+	background: #9e9e9e;
+}
 
-	.section {
-		background: #fff;
-		padding: 18rpx;
-		border-radius: 8rpx;
-		margin-bottom: 18rpx;
-	}
+.timeline-item.doing .dot {
+	background: #ff9800;
+}
 
-	.car-section {
-		display: flex;
-		align-items: center;
-	}
+.content {
+	flex: 1;
+	margin-left: 40rpx;
+	/* dot 与内容间距 */
+}
 
-	.car-left {
-		flex-shrink: 0;
-	}
+.item-title-wrapper {
+	display: flex;
+	/*justify-content: space-between;*/
+	align-items: center;
+	cursor: pointer;
+	position: relative;
+	z-index: 2;
+	/* 保证箭头显示在 dot 上层 */
+}
 
-	.thumb {
-		width: 200rpx;
-		height: 140rpx;
-		border-radius: 8rpx;
-		object-fit: cover;
-		/* 保持比例裁剪 */
-	}
+.item-title {
+	font-size: 28rpx;
+	font-weight: bold;
+	color: #333;
+	flex-shrink: 0;
+	max-width: 70%;
+}
 
-	.car-center {
-		flex: 1;
-		padding: 0 20rpx;
-	}
+.collapse-icon-text {
+	font-size: 28rpx;
+	color: #0078d7;
+	flex-shrink: 0;
+	margin-left: 8rpx;
+}
 
-	.summary {
-		font-size: 26rpx;
-		color: #333;
-		line-height: 36rpx;
-		display: -webkit-box;
-		-webkit-line-clamp: 3;
-		/* 最多显示三行 */
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		word-break: break-all;
-		max-height: 108rpx;
-	}
+.item-time {
+	font-size: 24rpx;
+	color: #666;
+	margin-top: 6rpx;
+}
 
-	.car-right {
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		align-items: flex-end;
-		min-width: 140rpx;
-		padding-right: 12rpx;
+.card {
+	background: #fff;
+	border-radius: 12rpx;
+	padding: 20rpx;
+	margin-top: 16rpx;
+	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+}
 
-	}
+.card-content {
+	margin-top: 16rpx;
+}
 
-	.price {
-		font-size: 30rpx;
-		color: #FF6B00;
-		font-weight: bold;
-	}
+.desc {
+	font-size: 26rpx;
+	color: #444;
+	margin-bottom: 12rpx;
+	display: block;
+}
 
-	.quantity {
-		font-size: 24rpx;
-		color: #666;
-		margin-top: 12rpx;
-	}
+.card-img,
+.card-video {
+	/* 	width: 100% */
+	border-radius: 8rpx;
+	margin-top: 12rpx;
+}
 
-	/* 物流 */
-	.track-list {
-		margin-top: 8rpx;
-	}
-
-	.track-item {
-		display: flex;
-		padding: 12rpx 0;
-	}
-
-	.track-left {
-		width: 60rpx;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-	}
-
-	.circle {
-		width: 18rpx;
-		height: 18rpx;
-		border-radius: 9rpx;
-		background: #ddd;
-		margin-bottom: 4rpx;
-	}
-
-	.circle.active {
-		background: #FF6B00;
-	}
-
-	.line {
-		width: 2rpx;
-		flex: 1;
-		background: #eee;
-	}
-
-	.track-right {
-		flex: 1;
-		padding-left: 12rpx;
-	}
-
-	.track-time {
-		font-size: 22rpx;
-		color: #999;
-	}
-
-	.track-desc {
-		font-size: 26rpx;
-		color: #333;
-		margin-top: 6rpx;
-	}
+.card-file {
+	color: #0078d7;
+	font-size: 24rpx;
+	margin-top: 8rpx;
+	display: block;
+}
+.disabled-file {
+	color: #999;
+}
 </style>

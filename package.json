@@ -1,6 +1,8 @@
 {
   "dependencies": {
-    "@rongcloud/engine": "^5.26.2",
-    "@rongcloud/imlib-next": "^5.26.2"
+    "@tencentcloud/chat-uikit-uniapp": "^2.5.5",
+    "cos-wx-sdk-v5": "^1.8.0",
+    "intl": "^1.2.5",
+    "unplugin-vue2-script-setup": "^0.11.4"
   }
 }

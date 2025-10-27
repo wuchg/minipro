@@ -1,0 +1,310 @@
+<template>
+	<view class="page">
+		<view class="card">
+			<view class="title">待办任务</view>
+			<!-- <view class="field">
+					<text class="label">待办ID：</text>
+					<text>{{ todoId }}</text>
+				</view> -->
+			<view class="field">
+				<text class="label">订单号：</text>
+				<text>{{ orderNo }}</text>
+			</view>
+			<view class="field">
+				<text class="label">操作类型：</text>
+				<text>{{ actionName }}</text>
+			</view>
+		</view>
+
+		<view class="upload-card">
+			<view class="title">上传资料</view>
+
+			<view class="upload-actions">
+				<button class="btn" @click="takePhoto">拍照上传</button>
+				<button class="btn" @click="chooseFile">选择会话中的文件</button>
+			</view>
+			<view class="preview-list" v-if="files.length">
+				<view v-for="(f, idx) in files" :key="idx" class="preview-item">
+					<image v-if="isImage(f.path)" :src="f.path" mode="aspectFill" class="preview-img"></image>
+					<video v-else :src="f.path" controls class="preview-video"></video>
+					<view class="remove" @click="removeFile(idx)">×</view>
+				</view>
+			</view>
+		</view>
+
+		<view class="submit-wrap">
+			<button class="confirm-btn" :disabled="loading" @click="submitTodo">
+				{{ loading ? '提交中...' : '确定完成' }}
+			</button>
+		</view>
+	</view>
+</template>
+
+<script>
+// #ifdef MP-WEIXIN
+import COS from 'cos-wx-sdk-v5';
+// #endif
+
+const token = uni.getStorageSync('access_token') || '';
+const cos = new COS({
+	SimpleUploadMethod: 'putObject',
+	getAuthorization: function (options, callback) {
+		uni.request({
+			url: `${getApp().globalData.baseUrl}/sts`,
+			dataType: 'json',
+			header: {
+				Authorization: token ? `Bearer ${token}` : ''
+			},
+			success: function (result) {
+				const data = result.data;
+				if (!data) return console.error('credentials invalid');
+				callback({
+					TmpSecretId: data.tmpSecretId,
+					TmpSecretKey: data.tmpSecretKey,
+					// v1.2.0之前版本的 SDK 使用 XCosSecurityToken 而不是 SecurityToken
+					SecurityToken: data.token,
+					XCosSecurityToken: data.token,
+					StartTime: data.startTime,
+					ExpiredTime: data.expiredTime
+				});
+			}
+		});
+	}
+});
+import { request } from '@/common/request.js';
+export default {
+	data() {
+		return {
+			todoId: '',
+			orderId: '',
+			orderNo: '',
+			actionCode: '',
+			actionName: '',
+			files: [],
+			loading: false
+		};
+	},
+	onLoad(options) {
+		this.todoId = options.todoId || '';
+		this.orderId = options.orderId || '';
+		this.orderNo = options.orderNo || '';
+		this.actionCode = options.actionCode || '';
+		this.actionName = options.actionName || '';
+	},
+	methods: {
+		isImage(path) {
+			return /\.(jpg|jpeg|png|gif)$/i.test(path);
+		},
+		getFileType(file) {
+			const name = file.name || file.path;
+			const ext = name.split('.').pop().toLowerCase();
+
+			if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext)) return 'image';
+			if (['mp4', 'mov', 'avi', 'mkv', 'wmv'].includes(ext)) return 'video';
+			if (['mp3', 'wav', 'aac', 'ogg'].includes(ext)) return 'audio';
+			if (['pdf'].includes(ext)) return 'pdf';
+			if (['doc', 'docx'].includes(ext)) return 'word';
+			if (['xls', 'xlsx'].includes(ext)) return 'excel';
+			if (['ppt', 'pptx'].includes(ext)) return 'ppt';
+			if (['txt', 'log', 'md'].includes(ext)) return 'text';
+			return 'other';
+		},
+
+		takePhoto() {
+			uni.chooseMedia({
+				sourceType: ['camera', 'album'],
+				mediaType: ['mix'],
+				success: async (res) => {
+					res.tempFiles.forEach((file) => {
+						this.files.push({
+							path: file.tempFilePath,
+							name: file.tempFilePath.split('/').pop(),
+							thumbTempFilePath: file.thumbTempFilePath,
+							type: file.fileType
+						});
+					});
+				},
+				fail: (err) => {
+					console.error('拍照失败：', err);
+				}
+			});
+		},
+		chooseFile() {
+			uni.chooseMessageFile({
+				count: 9,
+				type: 'all', // 可选：image, video, all, file
+				success: (res) => {
+					res.tempFiles.forEach((file) => {
+						this.files.push({
+							path: file.path,
+							name: file.name,
+							type: this.getFileType(file)
+						});
+					});
+				},
+				fail: (err) => {
+					console.error('chooseMessageFile 失败：', err);
+				}
+			});
+		},
+		removeFile(idx) {
+			this.files.splice(idx, 1);
+		},
+		uploadFileToCOS(orderNo, file) {
+			return new Promise((resolve, reject) => {
+				cos.postObject(
+					{
+						Bucket: 'autobss-1300679246',
+						Region: 'ap-hongkong',
+						Key: orderNo + '/' + file.name,
+						FilePath: file.path,
+						onProgress: (progressData) => {
+							if (progressData.percent === 1) {
+								console.log('上传进度100%，等待服务器确认...');
+							}
+						}
+					},
+					function (err, data) {
+						if (err) {
+							console.error('上传失败', err);
+							reject(err);
+						} else {
+							console.log('上传成功:', file.name);
+							resolve({
+								cosKey: orderNo + '/' + file.name,
+								type: file.type
+							});
+						}
+					}
+				);
+			});
+		},
+		async submitTodo() {
+			if (!this.files.length) {
+				uni.showToast({ title: '请先选择文件', icon: 'none' });
+				return;
+			}
+			this.loading = true;
+			uni.showLoading({ title: '上传中...', mask: true });
+			try {
+				const uploadResults = await Promise.all(this.files.map((f) => this.uploadFileToCOS(this.orderNo, f)));
+				const files = uploadResults.map((f) => `${f.type}:/${f.cosKey}`);
+				await request({
+					url: `/todos/${this.todoId}/complete`,
+					method: 'POST',
+					data: { orderId: this.orderId, todoId: this.todoId, actionCode: this.actionCode, attachment: files.join(';') }
+				});
+
+				uni.showToast({ title: '待办已完成', icon: 'success' });
+				setTimeout(() => {
+					const pages = getCurrentPages();
+					const prev = pages[pages.length - 2];
+					if (prev?.$vm?.loadTodos) prev.$vm.loadTodos(true);
+					uni.navigateBack();
+				}, 800);
+			} catch (e) {
+				console.error(e);
+				uni.showToast({ title: '提交失败', icon: 'none' });
+			} finally {
+				uni.hideLoading();
+				this.loading = false;
+			}
+		}
+	}
+};
+</script>
+
+<style>
+.page {
+	background: #f5f6f8;
+	min-height: 100vh;
+	padding: 20rpx;
+}
+
+.card,
+.upload-card {
+	background: #fff;
+	border-radius: 12rpx;
+	padding: 20rpx;
+	margin-bottom: 20rpx;
+	box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
+}
+
+.title {
+	font-size: 32rpx;
+	font-weight: 600;
+	color: #222;
+	margin-bottom: 16rpx;
+}
+
+.field {
+	font-size: 26rpx;
+	margin-bottom: 10rpx;
+}
+
+.label {
+	color: #888;
+}
+
+.upload-actions {
+	display: flex;
+	gap: 20rpx;
+	margin-bottom: 20rpx;
+}
+
+.btn {
+	background: #ff6b00;
+	color: #fff;
+	border-radius: 8rpx;
+	padding: 12rpx 28rpx;
+	font-size: 26rpx;
+}
+
+.preview-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16rpx;
+}
+
+.preview-item {
+	position: relative;
+	width: 200rpx;
+	height: 200rpx;
+}
+
+.preview-img,
+.preview-video {
+	width: 100%;
+	height: 100%;
+	border-radius: 8rpx;
+}
+
+.remove {
+	position: absolute;
+	top: -10rpx;
+	right: -10rpx;
+	background: rgba(0, 0, 0, 0.6);
+	color: #fff;
+	width: 40rpx;
+	height: 40rpx;
+	line-height: 40rpx;
+	text-align: center;
+	border-radius: 20rpx;
+	font-size: 28rpx;
+}
+
+.submit-wrap {
+	margin-top: 40rpx;
+	display: flex;
+	justify-content: center;
+}
+
+.confirm-btn {
+	width: 80%;
+	background: linear-gradient(90deg, #ff8a00, #ff6b00);
+	color: #fff;
+	border-radius: 40rpx;
+	padding: 16rpx 0;
+	font-size: 28rpx;
+}
+</style>

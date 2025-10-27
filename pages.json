@@ -2,19 +2,15 @@
 	"pages": [{
 			"path": "pages/index/index",
 			"style": {
-				"navigationBarTitleText": ""
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": true,
+				"onReachBottomDistance": 50
 			}
 		},
 		{
 			"path": "pages/detail/detail",
 			"style": {
-				"navigationBarTitleText": "车辆详情"
-			}
-		},
-		{
-			"path": "pages/chat/chat",
-			"style": {
-				"navigationBarTitleText": "聊天"
+				"navigationBarTitleText": "Подробности об автомобиле"
 			}
 		},
 		{
@@ -26,37 +22,125 @@
 		{
 			"path": "pages/orders/orders",
 			"style": {
-				"navigationBarTitleText": "我的订单"
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": true
 			}
 		},
 		{
 			"path": "pages/orderDetail/orderDetail",
 			"style": {
-				"navigationBarTitleText": "订单详情"
+				"navigationBarTitleText": "进度详情"
 			}
 		},
 		{
-			"path" : "pages/tempChat/tempChat",
-			"style" : 
-			{
-				"navigationBarTitleText" : ""
+			"path": "pages/conversations/conversations",
+			"style": {
+				"navigationBarTitleText": ""
 			}
 		},
 		{
-			"path" : "pages/conversations/conversations",
-			"style" : 
-			{
-				"navigationBarTitleText" : ""
+			"path": "pages/login/login",
+			"style": {
+				"navigationBarTitleText": ""
 			}
 		},
 		{
-			"path" : "pages/login/login",
-			"style" : 
-			{
-				"navigationBarTitleText" : ""
+			"path": "pages/contact/contact",
+			"style": {
+				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/workBench/workBench",
+			"style": {
+				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/user/user",
+			"style": {
+				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/order/order",
+			"style": {
+				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/todo/todo",
+			"style": {
+				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/todoHandle/todoHandle",
+			"style": {
+				"navigationBarTitleText": ""
 			}
 		}
 	],
+	"subPackages": [{
+		"root": "TUIKit",
+		"pages": [{
+				"path": "components/TUIConversation/index",
+				"style": {
+					"navigationBarTitleText": "聊天"
+				}
+			},
+			{
+				"path": "components/TUIChat/index",
+				"style": {
+					"navigationBarTitleText": "腾讯云 IM",
+					"app-plus": {
+						"softinputMode": "adjustResize",
+						"titleNView": {
+							"buttons": [{
+								"type": "menu"
+							}]
+						}
+					},
+					"h5": {
+						"titleNView": {
+							"buttons": []
+						}
+					}
+				}
+			},
+			// 集成 chat 组件，必须配置该路径: 视频播放
+			{
+				"path": "components/TUIChat/video-play",
+				"style": {
+					"navigationBarTitleText": "腾讯云 IM"
+				}
+			},
+			{
+				"path": "components/TUIChat/web-view",
+				"style": {
+					"navigationBarTitleText": "腾讯云 IM"
+				}
+			},
+			{
+				"path": "components/TUIContact/index",
+				"style": {
+					"navigationBarTitleText": ""
+				}
+			},
+			{
+				"path": "components/TUIGroup/index",
+				"style": {
+					"navigationBarTitleText": "腾讯云 IM"
+				}
+			},
+			{
+				"path": "components/TUISearch/index",
+				"style": {
+					"navigationBarTitleText": "聊天记录"
+				}
+			}
+		]
+	}],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "uni-app",
@@ -71,29 +155,28 @@
 		"borderStyle": "black",
 		"list": [{
 				"pagePath": "pages/index/index",
-				"text": "首页"
+				"text": "Главная"
 				// "iconPath": "static/icons/home.png",
 				// "selectedIconPath": "static/icons/home_active.png"
 			},
 			{
 				"pagePath": "pages/conversations/conversations",
-				"text": "聊天"
+				"text": "Чат"
 				// "iconPath": "static/icons/chat.png",
 				// "selectedIconPath": "static/icons/chat_active.png"
 			},
-			// {
-			//   "pagePath": "pages/profile/profile",
-			//   "text": "我的"
-			//   "iconPath": "static/icons/user.png",
-			//   "selectedIconPath": "static/icons/user_active.png"
-			// },
+
 			{
-				"pagePath": "pages/orders/orders",
-				"text": "我的订单"
+				"pagePath": "pages/workBench/workBench",
+				"text": "工作台"
 				//   "iconPath": "static/icons/user.png",
 				// "selectedIconPath": "static/icons/user_active.png" ,
+			}, {
+				"pagePath": "pages/profile/profile",
+				"text": "我的"
+				// "iconPath": "static/icons/user.png",
+				// "selectedIconPath": "static/icons/user_active.png"
 			}
-
 		]
 	}
 }
