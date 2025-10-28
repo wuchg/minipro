@@ -46,6 +46,7 @@ export default {
 		return {
 			orderId: null,
 			timeline: [],
+			downloading: false,
 			noDataImg: `${getApp().globalData.baseImgUrl}/static/no_data.png`
 		};
 	},
@@ -78,7 +79,9 @@ export default {
 			});
 		},
 		handleMedia(url) {
-			if (!url) return;
+			if (!url || this.downloading) return;
+			this.downloading = true;
+			uni.showLoading({ title: '下载中...', mask: true });
 			uni.downloadFile({
 				url,
 				success: (res) => {
@@ -95,7 +98,11 @@ export default {
 						}
 					}
 				},
-				fail: () => uni.showToast({ title: '下载失败', icon: 'none' })
+				fail: () => uni.showToast({ title: '下载失败', icon: 'none' }),
+				complete: () => {
+					this.downloading = false;
+					uni.hideLoading();
+				}
 			});
 		},
 		previewMedia(url) {
