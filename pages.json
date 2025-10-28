@@ -71,12 +71,12 @@
 		{
 			"path": "components/TUIConversation/index",
 			"style": {
-				"navigationBarTitleText": "聊天"
+				"navigationBarTitleText": ""
 			}
 		}, {
 			"path": "components/TUIChat/index",
 			"style": {
-				"navigationBarTitleText": "腾讯云 IM",
+				"navigationBarTitleText": "",
 				"app-plus": {
 					"softinputMode": "adjustResize",
 					"titleNView": {
@@ -96,19 +96,19 @@
 		{
 			"path": "components/TUIChat/video-play",
 			"style": {
-				"navigationBarTitleText": "腾讯云 IM"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "components/TUIChat/web-view",
 			"style": {
-				"navigationBarTitleText": "腾讯云 IM"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "components/TUISearch/index",
 			"style": {
-				"navigationBarTitleText": "聊天记录"
+				"navigationBarTitleText": ""
 			}
 		}
 	],
@@ -126,27 +126,27 @@
 		"borderStyle": "black",
 		"list": [{
 				"pagePath": "pages/index/index",
-				"text": "Главная"
-				// "iconPath": "static/icons/home.png",
-				// "selectedIconPath": "static/icons/home_active.png"
+				"text": "Главная",
+				"iconPath": "static/icons/index_gr.png",
+				"selectedIconPath": "static/icons/index.png"
 			},
 			{
 				"pagePath": "components/TUIConversation/index",
-				"text": "Чат"
-				// "iconPath": "static/icons/chat.png",
-				// "selectedIconPath": "static/icons/chat_active.png"
+				"text": "Чат",
+				"iconPath": "static/icons/chat_gr.png",
+				"selectedIconPath": "static/icons/chat.png"
 			},
 
 			{
 				"pagePath": "pages/workBench/workBench",
-				"text": "工作台"
-				//   "iconPath": "static/icons/user.png",
-				// "selectedIconPath": "static/icons/user_active.png" ,
+				"text": "верстак",
+				"iconPath": "static/icons/w_gr.png",
+				"selectedIconPath": "static/icons/w.png"
 			}, {
 				"pagePath": "pages/profile/profile",
-				"text": "我的"
-				// "iconPath": "static/icons/user.png",
-				// "selectedIconPath": "static/icons/user_active.png"
+				"text": "Профиль",
+				"iconPath": "static/icons/p_gr.png",
+				"selectedIconPath": "static/icons/p.png"
 			}
 		]
 	}

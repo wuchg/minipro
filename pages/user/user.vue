@@ -12,8 +12,16 @@
 				<text class="label">密码</text>
 				<view class="password-row">
 					<input class="input flex-1" v-model="form.password" placeholder="请输入密码或点击生成" password />
-					<button class="btn-generate" @click="generatePassword">生成</button>
-					<button class="btn-copy" @click="copyPassword">复制</button>
+
+					<!-- 生成按钮 -->
+					<view class="icon-btn" @click="generatePassword">
+						<image src="/static/icons/genKey.png" mode="widthFix" />
+					</view>
+
+					<!-- 复制按钮 -->
+					<view class="icon-btn" @click="copyPassword">
+						<image src="/static/icons/copyPwd.png" mode="widthFix" />
+					</view>
 				</view>
 			</view>
 
@@ -64,7 +72,6 @@ export default {
 			this.form.roleCode = selected.code;
 			this.form.roleName = selected.name;
 		},
-		// ✅ 随机密码
 		generatePassword() {
 			const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#_-';
 			let pwd = '';
@@ -74,7 +81,6 @@ export default {
 			this.form.password = pwd;
 			uni.showToast({ title: '已生成随机密码', icon: 'none' });
 		},
-		// ✅ 复制密码
 		copyPassword() {
 			if (!this.form.password) {
 				return uni.showToast({ title: '请先生成或输入密码', icon: 'none' });
@@ -86,7 +92,6 @@ export default {
 				}
 			});
 		},
-		// ✅ 提交表单
 		async submit() {
 			if (this.submitting) return;
 			if (!this.form.username || this.form.username.length < 3) {
@@ -169,24 +174,36 @@ export default {
 	gap: 16rpx;
 }
 
-.btn-generate {
-	background: linear-gradient(90deg, #007aff, #0051d4);
-	color: #fff;
-	padding: 16rpx 30rpx;
-	border-radius: 12rpx;
-	font-size: 26rpx;
-	box-shadow: 0 4rpx 10rpx rgba(0, 122, 255, 0.3);
+.input {
+	flex: 1;
+	background: #f7f8fa;
+	border-radius: 10rpx;
+	padding: 20rpx;
+	font-size: 28rpx;
+	border: 1rpx solid #eee;
+	color: #333;
 }
 
-.btn-copy {
-	background: linear-gradient(90deg, #4cd964, #36b04c);
-	color: #fff;
-	padding: 16rpx 30rpx;
+.icon-btn {
+	width: 60rpx;
+	height: 60rpx;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 	border-radius: 12rpx;
-	font-size: 26rpx;
-	box-shadow: 0 4rpx 10rpx rgba(76, 217, 100, 0.3);
+	background: #f7f8fa;
+	box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1);
 }
 
+.icon-btn image {
+	width: 36rpx;
+	height: 36rpx;
+}
+.icon-tip {
+	font-size: 22rpx;
+	color: #666;
+	margin-top: 6rpx;
+}
 .submit-btn {
 	background: linear-gradient(90deg, #ff8a00, #ff6b00);
 	color: #fff;
