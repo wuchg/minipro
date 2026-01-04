@@ -1,27 +1,23 @@
 <template>
 	<view class="page">
 		<view class="card">
-			<view class="title">待办任务</view>
-			<!-- <view class="field">
-					<text class="label">待办ID：</text>
-					<text>{{ todoId }}</text>
-				</view> -->
+			<view class="title">{{ $t('todo.title') }}</view>
 			<view class="field">
-				<text class="label">订单号：</text>
+				<text class="label">{{ $t('todo.orderNo') }}：</text>
 				<text>{{ orderNo }}</text>
 			</view>
 			<view class="field">
-				<text class="label">操作类型：</text>
+				<text class="label">{{ $t('todo.actionType') }}：</text>
 				<text>{{ actionName }}</text>
 			</view>
 		</view>
 
 		<view class="upload-card">
-			<view class="title">上传资料</view>
+			<view class="title">{{ $t('todo.uploadTitle') }}</view>
 
 			<view class="upload-actions">
-				<button class="btn" @click="takePhoto">拍照上传</button>
-				<button class="btn" @click="chooseFile">选择会话中的文件</button>
+				<button class="btn" @click="takePhoto">{{ $t('todo.takePhoto') }}</button>
+				<button class="btn" @click="chooseFile">{{ $t('todo.chooseFile') }}</button>
 			</view>
 			<view class="preview-list" v-if="files.length">
 				<view v-for="(f, idx) in files" :key="idx" class="preview-item">
@@ -34,7 +30,7 @@
 
 		<view class="submit-wrap">
 			<button class="confirm-btn" :disabled="loading" @click="submitTodo">
-				{{ loading ? '提交中...' : '确定完成' }}
+				{{ loading ? $t('todo.submitting') : $t('todo.submit') }}
 			</button>
 		</view>
 	</view>
@@ -61,7 +57,6 @@ const cos = new COS({
 				callback({
 					TmpSecretId: data.tmpSecretId,
 					TmpSecretKey: data.tmpSecretKey,
-					// v1.2.0之前版本的 SDK 使用 XCosSecurityToken 而不是 SecurityToken
 					SecurityToken: data.token,
 					XCosSecurityToken: data.token,
 					StartTime: data.startTime,
@@ -152,11 +147,20 @@ export default {
 		},
 		uploadFileToCOS(orderNo, file) {
 			return new Promise((resolve, reject) => {
+				const now = new Date();
+
+				// 格式化年月日
+				const year = now.getFullYear();
+				const month = String(now.getMonth() + 1).padStart(2, '0');
+				const day = String(now.getDate()).padStart(2, '0');
+				// 构建 Key 路径，例如：orders/2025/11/11/ORDER123/image.jpg
+				const key = `orders/${year}/${month}/${day}/${orderNo}/${file.name}`;
+
 				cos.postObject(
 					{
 						Bucket: 'autobss-1300679246',
 						Region: 'ap-hongkong',
-						Key: orderNo + '/' + file.name,
+						Key: key,
 						FilePath: file.path,
 						onProgress: (progressData) => {
 							if (progressData.percent === 1) {
@@ -166,12 +170,10 @@ export default {
 					},
 					function (err, data) {
 						if (err) {
-							console.error('上传失败', err);
 							reject(err);
 						} else {
-							console.log('上传成功:', file.name);
 							resolve({
-								cosKey: orderNo + '/' + file.name,
+								cosKey: key,
 								type: file.type
 							});
 						}
@@ -181,11 +183,11 @@ export default {
 		},
 		async submitTodo() {
 			if (!this.files.length) {
-				uni.showToast({ title: '请先选择文件', icon: 'none' });
+				uni.showToast({ title: this.$t('todo.uploadTip'), icon: 'none' });
 				return;
 			}
 			this.loading = true;
-			uni.showLoading({ title: '上传中...', mask: true });
+			uni.showLoading({ title: this.$t('todo.uploadInProgress'), mask: true });
 			try {
 				const uploadResults = await Promise.all(this.files.map((f) => this.uploadFileToCOS(this.orderNo, f)));
 				const files = uploadResults.map((f) => `${f.type}:/${f.cosKey}`);
@@ -195,7 +197,7 @@ export default {
 					data: { orderId: this.orderId, todoId: this.todoId, actionCode: this.actionCode, attachment: files.join(';') }
 				});
 
-				uni.showToast({ title: '待办已完成', icon: 'success' });
+				uni.showToast({ title: this.$t('todo.completeSuccess'), icon: 'success' });
 				setTimeout(() => {
 					const pages = getCurrentPages();
 					const prev = pages[pages.length - 2];
@@ -204,7 +206,7 @@ export default {
 				}, 800);
 			} catch (e) {
 				console.error(e);
-				uni.showToast({ title: '提交失败', icon: 'none' });
+				uni.showToast({ title: this.$t('todo.completeFail'), icon: 'none' });
 			} finally {
 				uni.hideLoading();
 				this.loading = false;

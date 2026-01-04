@@ -1,10 +1,21 @@
 <template>
 	<view class="workbench-page">
-		<view class="workbench-grid">
-			<view class="grid-item" v-for="(item, index) in menuList" :key="index" @click="onItemClick(item)">
-				<image :src="item.icon" class="grid-icon" mode="aspectFit"></image>
-				<text class="grid-text">{{ item.name }}</text>
+		<block v-if="menuList.length">
+			<view class="menu-card" v-for="(item, index) in menuList" :key="index" @click="onItemClick(item)">
+				<view class="menu-icon-box">
+					<image :src="item.icon" class="menu-icon" mode="aspectFit"></image>
+				</view>
+
+				<view class="menu-info">
+					<text class="menu-name">{{ item.name }}</text>
+					<text class="menu-desc">{{ item.desc }}</text>
+				</view>
+				<text class="arrow">›</text>
 			</view>
+		</block>
+
+		<view v-else class="empty">
+			{{ $t('common.noData') }}
 		</view>
 	</view>
 </template>
@@ -19,10 +30,10 @@ export default {
 	},
 	onLoad() {
 		this.loadMenus();
-		// 监听页面变化
+		// 用户变化时自动刷新菜单
 		uni.$on('userChanged', (data) => {
 			console.log('检测到用户变化:', data);
-			this.loadMenus(); // 重新加载工作台菜单
+			this.loadMenus();
 		});
 	},
 	onUnload() {
@@ -32,22 +43,38 @@ export default {
 		loadMenus() {
 			request({
 				url: '/auth/workbench-menus'
-			}).then((res) => {
-				if (res.code === 0) {
-					this.menuList = [];
-					const data = res.data;
-					data?.forEach((it) => {
-						this.menuList.push({ name: it.name, icon: `${getApp().globalData.baseImgUrl}/workbench/` + it.icon, url: '/pages' + it.path });
+			})
+				.then((res) => {
+					if (res.code === 0) {
+						const base = getApp().globalData.baseImgUrl;
+						this.menuList =
+							res.data?.map((it) => ({
+								name: it.name || '',
+								desc: it.desc || it.name,
+								icon: `/static/${it.icon}`,
+								url: it.path ? '/pages' + it.path : ''
+							})) || [];
+					} else {
+						uni.showToast({
+							title: res.msg || this.$t('common.loadFail'),
+							icon: 'none'
+						});
+					}
+				})
+				.catch((err) => {
+					console.error('加载菜单失败', err);
+					uni.showToast({
+						title: this.$t('common.loadFail'),
+						icon: 'none'
 					});
-				}
-			});
+				});
 		},
 		onItemClick(item) {
 			if (item.url) {
 				uni.navigateTo({ url: item.url });
 			} else {
 				uni.showToast({
-					title: `未设置跳转页面`,
+					title: this.$t('common.pageNotSet') || '未设置跳转页面',
 					icon: 'none'
 				});
 			}
@@ -58,38 +85,65 @@ export default {
 
 <style scoped>
 .workbench-page {
-	padding: 20rpx;
-	background-color: #f5f5f5;
+	background: #f7f8fa;
 	min-height: 100vh;
-}
-
-.workbench-grid {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: space-between;
-}
-
-.grid-item {
-	width: 23%;
-	margin-bottom: 30rpx;
-	background-color: #fff;
-	border-radius: 16rpx;
+	padding: 20rpx;
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	padding: 20rpx 0;
-	box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+	gap: 16rpx;
 }
 
-.grid-icon {
+/* 菜单卡片 */
+.menu-card {
+	display: flex;
+	align-items: center;
+	background: #fff;
+	border-radius: 16rpx;
+	padding: 20rpx 24rpx;
+	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+	transition: transform 0.2s;
+}
+
+.menu-card:active {
+	transform: scale(0.98);
+}
+
+.menu-icon {
 	width: 60rpx;
 	height: 60rpx;
-	margin-bottom: 10rpx;
+	margin-right: 20rpx;
 }
 
-.grid-text {
-	font-size: 26rpx;
+.menu-info {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.menu-name {
+	font-size: 30rpx;
 	color: #333;
+	font-weight: 600;
+	word-break: break-word;
+}
+
+.menu-desc {
+	font-size: 24rpx;
+	color: #888;
+	margin-top: 4rpx;
+	word-break: break-word;
+}
+
+.arrow {
+	font-size: 38rpx;
+	color: #bbb;
+}
+
+/* 空数据状态 */
+.empty {
 	text-align: center;
+	color: #999;
+	font-size: 28rpx;
+	padding: 100rpx 0;
 }
 </style>

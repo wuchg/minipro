@@ -9,6 +9,16 @@
 				</picker>
 			</view>
 
+			<!-- 选择业务员 -->
+			<view class="form-item">
+				<text class="label">业务员</text>
+				<picker :range="salesList" range-key="name" @change="onSalesChange">
+					<view class="picker">
+						{{ form.salesName || '请选择业务员' }}
+					</view>
+				</picker>
+			</view>
+
 			<!-- 个性化配置 Tags -->
 			<view class="form-item">
 				<text class="label">个性化配置</text>
@@ -86,11 +96,14 @@ export default {
 			selectedTags: [],
 			showInput: false, // 是否显示输入框
 			newTag: '',
+			salesList: [], //
 			form: {
 				carId: '',
 				carName: '',
 				vin: '',
-				remark: ''
+				remark: '',
+				userId: '',
+				salesName: ''
 			},
 			submitting: false
 		};
@@ -98,6 +111,7 @@ export default {
 	onLoad() {
 		this.loadCars();
 		this.loadTags();
+		this.loadSales();
 	},
 	methods: {
 		uploadFileToCOS(filePath) {
@@ -202,6 +216,20 @@ export default {
 			}
 		},
 
+		async loadSales() {
+			try {
+				const res = await request({ url: '/auth/get-sales', method: 'GET' });
+				if (res.code === 0 && Array.isArray(res.data)) {
+					this.salesList = res.data.map((s) => ({
+						id: s.id,
+						name: s.username
+					}));
+				}
+			} catch (e) {
+				console.error('loadSales error', e);
+				uni.showToast({ title: '加载业务员失败', icon: 'none' });
+			}
+		},
 		async chooseImage() {
 			const that = this;
 			uni.chooseImage({
@@ -250,10 +278,20 @@ export default {
 			this.form.carName = car.name;
 		},
 
+		onSalesChange(e) {
+			const index = e.detail.value;
+			const s = this.salesList[index];
+			this.form.userId = s.id;
+			this.form.salesName = s.name;
+		},
+
 		// 提交订单
 		async submitOrder() {
 			if (!this.form.carId) {
 				return uni.showToast({ title: '请选择车辆', icon: 'none' });
+			}
+			if (!this.form.userId) {
+				return uni.showToast({ title: '请选择业务员', icon: 'none' });
 			}
 			if (this.submitting) return;
 
@@ -264,6 +302,7 @@ export default {
 					method: 'POST',
 					data: {
 						carId: this.form.carId,
+						userId: this.form.userId,
 						carRemarks: this.form.remark,
 						carTags: this.selectedTags?.join(','),
 						carVin: this.form.vin

@@ -23,8 +23,23 @@ function handleUnauthorized() {
 	})
 }
 
+function getAcceptLanguage() {
+	const lang = uni.getStorageSync('language') || 'system'
+	if (lang === 'system') {
+		return uni.getLocale() || 'zh-CN'
+	}
+	const map = {
+		zh: 'zh-CN',
+		en: 'en-US',
+		ru: 'ru-RU'
+	}
+	return map[lang] || 'en-US'
+}
+
 export function request(options) {
 	const token = uni.getStorageSync('access_token') || ''
+	const acceptLanguage = getAcceptLanguage()
+
 	return new Promise((resolve, reject) => {
 		uni.request({
 			url: baseUrl + options.url, // 自动拼接
@@ -32,7 +47,8 @@ export function request(options) {
 			data: options.data || {},
 			header: {
 				'content-type': 'application/json',
-				'Authorization': token ? `Bearer ${token}` : ''
+				'Authorization': token ? `Bearer ${token}` : '',
+				'Accept-Language': acceptLanguage
 			},
 			success(res) {
 				if (res.statusCode === 401) {

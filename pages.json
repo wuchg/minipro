@@ -16,7 +16,7 @@
 		{
 			"path": "pages/profile/profile",
 			"style": {
-				"navigationBarTitleText": "个人中心"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
@@ -29,7 +29,7 @@
 		{
 			"path": "pages/orderDetail/orderDetail",
 			"style": {
-				"navigationBarTitleText": "进度详情"
+				"navigationBarTitleText": ""
 			}
 		},
 		{

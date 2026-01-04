@@ -7,8 +7,8 @@
 
 					<view class="todo-info">
 						<view class="todo-title">{{ todo.carSummary }}</view>
-						<text class="todo-sub">订单号：{{ todo.orderNo }}</text>
-
+						<!-- <text class="todo-sub">订单号：{{ todo.orderNo }}</text> -->
+						<text class="todo-sub">VIN：{{ todo.vin }}</text>
 						<view class="todo-action">
 							<button class="action-btn" @click="handleAction(todo)">
 								{{ actionText(todo.actionName) }}

@@ -1,36 +1,38 @@
 <template>
-	<scroll-view scroll-y class="page" @scrolltolower="onReachBottom">
-		<!-- 顶部广告位 -->
-		<swiper class="ad-swiper" autoplay circular interval="4000" indicator-dots indicator-color="rgba(255,255,255,0.4)" indicator-active-color="#fff">
-			<swiper-item v-for="(ad, i) in ads" :key="i">
-				<image :src="ad.img" class="ad-img" mode="aspectFill" @click="goAd(ad)" />
-			</swiper-item>
-		</swiper>
+	<scroll-view scroll-y class="page" @scrolltolower="handleScrollToLower">
+		<view class="content">
+			<!-- 顶部广告位 -->
+			<swiper class="ad-swiper" autoplay circular interval="4000" indicator-dots indicator-color="rgba(255,255,255,0.4)" indicator-active-color="#fff">
+				<swiper-item v-for="(ad, i) in ads" :key="i">
+					<image :src="ad.img" class="ad-img" mode="aspectFill" @click="goAd(ad)" />
+				</swiper-item>
+			</swiper>
 
-		<!-- 分隔线或分组标题 -->
-		<view class="section-header">
-			<text class="section-title">热门车型</text>
-		</view>
+			<!-- 分隔线或分组标题 -->
+			<view class="section-header">
+				<text class="section-title">{{ $t('index.section-header') }}</text>
+			</view>
 
-		<!-- 车辆列表 -->
-		<view v-for="car in cars" :key="car.id" class="car-card" @click="goDetail(car)">
-			<view class="car-img-wrapper">
-				<image class="car-img" :src="car.imgUrl" mode="aspectFill"></image>
+			<!-- 车辆列表 -->
+			<view v-for="car in cars" :key="car.id" class="car-card" @click="goDetail(car)">
+				<view class="car-img-wrapper">
+					<image class="car-img" :src="car.imgUrl" mode="aspectFill"></image>
 
-				<!-- 角标 -->
-				<view v-if="car.tag" class="car-tag" :class="'tag-' + car.tag">
-					{{ car.tag }}
+					<!-- 角标 -->
+					<view v-if="car.tag" class="car-tag" :class="'tag-' + car.tag">
+						{{ car.tag }}
+					</view>
+				</view>
+
+				<view class="car-info">
+					<view class="car-name">{{ car.name }}</view>
+					<view class="car-desc">{{ car.summary }}</view>
 				</view>
 			</view>
 
-			<view class="car-info">
-				<view class="car-name">{{ car.name }}</view>
-				<view class="car-desc">{{ car.summary }}</view>
-			</view>
+			<view class="loading" v-if="loading">加载中...</view>
+			<view class="no-more" v-if="noMore">—— 没有更多了 ——</view>
 		</view>
-
-		<view class="loading" v-if="loading">加载中...</view>
-		<view class="no-more" v-if="noMore">—— 没有更多了 ——</view>
 	</scroll-view>
 </template>
 
@@ -49,12 +51,7 @@ export default {
 	onLoad() {
 		this.loadCars();
 		this.loadAds();
-	},
-	onReachBottom() {
-		if (!this.loading && !this.noMore) {
-			this.page++;
-			this.loadCars();
-		}
+		console.log('local', uni.getLocale());
 	},
 	onPullDownRefresh() {
 		this.page = 1;
@@ -62,6 +59,12 @@ export default {
 		this.loadCars(() => uni.stopPullDownRefresh());
 	},
 	methods: {
+		handleScrollToLower() {
+			if (!this.loading && !this.noMore) {
+				this.page++;
+				this.loadCars();
+			}
+		},
 		loadAds() {
 			uni.request({
 				url: `${getApp().globalData.baseUrl}/ads`,
@@ -141,9 +144,12 @@ export default {
 </script>
 <style scoped>
 .page {
-	height: 100vh;
+	height: 100vh; /* 必须保持固定高度 */
+	overflow: hidden;
+}
+
+.content {
 	padding: 26rpx;
-	background-color: #f6f7fb;
 	box-sizing: border-box;
 }
 
@@ -233,7 +239,10 @@ export default {
 	backdrop-filter: blur(3rpx);
 }
 .tag-New {
-	background: linear-gradient(120deg, #36d1dc, #5b86e5);
+	background: linear-gradient(120deg, #ffa64d, #ff7a00); /* 主色调增强亮色橙 */
+	color: #fff;
+	font-weight: 700;
+	text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.25); /* 让字体更清晰 */
 }
 .tag-Hot {
 	background: linear-gradient(120deg, #ff512f, #f09819);

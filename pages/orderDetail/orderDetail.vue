@@ -25,7 +25,6 @@
 							</template>
 
 							<image v-if="item.img" :src="item.img" mode="widthFix" class="card-media" @tap="previewMedia(item.img)"></image>
-
 							<video v-if="item.video" :src="item.video" controls class="card-media" @longpress="handleMedia(item.video)"></video>
 
 							<text v-if="item.fileName && item.downloadable" class="card-file" @longpress="handleMedia(item.fileUrl)">{{ item.fileName }}️</text>

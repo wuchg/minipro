@@ -1,50 +1,51 @@
 <template>
 	<view class="page">
-		<!--    <view class="header">
-      <text class="header-title">我的订单</text>
-    </view> -->
 		<scroll-view class="list" scroll-y :lower-threshold="100" @scrolltolower="onReachBottom" @scrolltoupper="onScrollTop">
-			<block v-if="orders.length">
-				<view class="order-item" v-for="order in orders" :key="order.id" @click="openOrder(order)">
-					<view class="order-top">
-						<view>
-							<text class="order-no">订单号：{{ order.orderNo }}</text>
-							<text class="order-time">VIN：{{ order.vin }}</text>
-						</view>
-						<view class="order-price">定制款</view>
-					</view>
-
-					<view class="order-body">
-						<image class="order-thumb" :src="order.thumb" mode="aspectFill" />
-						<view class="order-info">
-							<view class="car-row">
-								<text class="car-name">{{ order.title }}</text>
-								<text class="car-sub">数量：{{ order.quantity }}</text>
+			<uni-swipe-action>
+				<block v-if="orders.length">
+					<uni-swipe-action-item v-for="order in orders" :key="order.id" :right-options="swipeOptions" @click="onSwipeClick($event, order)">
+						<view class="order-item">
+							<view class="order-top">
+								<view class="order-meta">
+									<!-- <text class="order-no">{{ $t('order.orderNo') }}：{{ order.orderNo }}</text>-->
+									<text class="order-time">{{ $t('order.vin') }}：{{ order.vin }}</text>
+								</view>
+								<view class="order-tags">
+									<text v-for="(tag, i) in splitTags(order.tags)" :key="i" class="tag">{{ tag }}</text>
+								</view>
 							</view>
-							<!-- 进度显示 -->
-							<view class="progress-wrap">
-								<view class="progress-legend">
-									<view v-for="(step, idx) in progressSteps" :key="idx" class="legend-item">
-										<view class="legend-dot" :style="{ backgroundColor: orderProgressColor(order.status, idx) }"></view>
-										<text class="legend-text">{{ step }}</text>
+
+							<view class="order-body" @click.stop="openOrder(order)">
+								<image class="order-thumb" :src="order.thumb" mode="aspectFill" />
+								<view class="order-info">
+									<view class="car-row">
+										<text class="car-name">{{ order.title }}</text>
+										<!-- <text class="car-sub">{{ $t('order.quantity') }}：{{ order.quantity }}</text> -->
+									</view>
+									<!-- 进度显示 -->
+									<view class="progress-wrap">
+										<view class="progress-legend">
+											<view v-for="(step, idx) in progressSteps" :key="idx" class="legend-item">
+												<view class="legend-dot" :style="{ backgroundColor: orderProgressColor(order.status, idx) }"></view>
+												<text class="legend-text">{{ step }}</text>
+											</view>
+										</view>
+
+										<view class="progress-bar">
+											<view class="progress-fill" :style="{ width: progressPercent(order.status) + '%' }"></view>
+										</view>
+
+										<text class="status-text">{{ statusText(order.status) }}</text>
 									</view>
 								</view>
-
-								<view class="progress-bar">
-									<view class="progress-fill" :style="{ width: progressPercent(order.status) + '%' }"></view>
-								</view>
-
-								<text class="status-text">{{ statusText(order.status) }}</text>
 							</view>
 						</view>
-					</view>
-				</view>
-			</block>
-
-			<view v-else class="empty">暂无订单，快去下单吧</view>
-
-			<view class="loading" v-if="loading">加载中...</view>
-			<view class="no-more" v-if="noMore">没有更多了</view>
+					</uni-swipe-action-item>
+				</block>
+			</uni-swipe-action>
+			<!-- <view v-else class="empty">{{ $t('order.empty') }}</view> -->
+			<view class="loading" v-if="loading">{{ $t('common.loading') }}</view>
+			<view class="no-more" v-if="noMore">{{ $t('common.noMore') }}</view>
 		</scroll-view>
 	</view>
 </template>
@@ -55,12 +56,22 @@ import { request } from '@/common/request.js';
 export default {
 	data() {
 		return {
+			// 右滑出现按钮
+			swipeOptions: [
+				{
+					text: '删除',
+					style: {
+						backgroundColor: '#FF3B30',
+						color: '#fff'
+					}
+				}
+			],
 			page: 1,
 			pageSize: 10,
 			orders: [],
 			loading: false,
 			noMore: false,
-			progressSteps: ['已下单', '已打款', '已发出', '已接车']
+			progressSteps: [this.$t('order.steps.1'), this.$t('order.steps.2'), this.$t('order.steps.3'), this.$t('order.steps.4')]
 		};
 	},
 	onLoad() {
@@ -75,6 +86,20 @@ export default {
 		this.loadOrders(true);
 	},
 	methods: {
+		// 处理滑动按钮点击
+		onSwipeClick(e, order) {
+			if (e.content.text === '删除') {
+				this.deleteOrder(order);
+			}
+		},
+		splitTags(tags) {
+			if (!tags) return [];
+			if (Array.isArray(tags)) return tags;
+			return tags
+				.split(/[,;，；]/)
+				.map((t) => t.trim())
+				.filter(Boolean);
+		},
 		formatPrice(v) {
 			return (v / 100).toFixed(2);
 		},
@@ -117,38 +142,45 @@ export default {
 			this.loading = true;
 			request({
 				url: '/orders?page_size=' + this.pageSize + '&page_num=' + this.page
-			}).then((res) => {
-				// 兼容各种后端返回情况
-				if (!res) {
-					uni.showToast({
-						title: '服务器返回异常',
-						icon: 'none'
-					});
-					return;
-				}
-				if (res.code !== 0) {
-					uni.showToast({
-						title: res.msg || '加载失败',
-						icon: 'none'
-					});
-					return;
-				}
-				res.data?.orders?.map((order) => {
-					this.orders.push({
-						id: order.id,
-						vin: order.vin,
-						orderNo: order.tradeNo,
-						createdAt: this.formatter(order.createdAt),
-						total: 0, // 分
-						thumb: `https://img.autoboss.cloud/${order.car.thumbnail}`,
-						title: order.car.summary,
-						quantity: 1,
-						status: order.status
-					});
+			})
+				.then((res) => {
+					// 兼容各种后端返回情况
+					if (!res) {
+						uni.showToast({
+							title: this.$t('common.serverError'),
+							icon: 'none'
+						});
+						return;
+					}
+					if (res.code !== 0) {
+						uni.showToast({
+							title: res.msg || this.$t('common.loadFail'),
+							icon: 'none'
+						});
+						return;
+					}
+					const newOrders =
+						res.data?.orders?.map((order) => ({
+							id: order.id,
+							vin: order.vin,
+							orderNo: order.tradeNo,
+							createdAt: this.formatter(order.createdAt),
+							total: 0,
+							thumb: `${getApp().globalData.baseImgUrl}/${order.car.thumbnail}`,
+							title: order.car.summary,
+							quantity: 1,
+							tags: order.tags,
+							status: order.status
+						})) || [];
+					this.orders = isRefresh ? newOrders : [...this.orders, ...newOrders];
+
+					this.loading = false;
+					uni.stopPullDownRefresh();
+				})
+				.finally(() => {
+					this.loading = false;
+					uni.stopPullDownRefresh();
 				});
-				this.loading = false;
-				uni.stopPullDownRefresh();
-			});
 			// complete: () => {
 			// 	this.loading = false;
 			// 	uni.stopPullDownRefresh();
@@ -177,23 +209,23 @@ export default {
 		statusText(status) {
 			switch (status) {
 				case 1:
-					return '已下单';
+					return this.$t('order.status.1');
 				case 2:
-					return '待上传车辆影像';
+					return this.$t('order.status.2');
 				case 3:
-					return '待上传电子合同';
+					return this.$t('order.status.3');
 				case 4:
-					return '打款确认中';
+					return this.$t('order.status.4');
 				case 5:
-					return '打款回单';
+					return this.$t('order.status.5');
 				case 6:
-					return '报关文件';
+					return this.$t('order.status.6');
 				case 7:
-					return '加装项目';
+					return this.$t('order.status.7');
 				case 8:
-					return '物流发运';
+					return this.$t('order.status.8');
 				case 9:
-					return '收车确认';
+					return this.$t('order.status.9');
 				default:
 					return '';
 			}
@@ -225,7 +257,6 @@ export default {
 		},
 		orderProgressColor(status, stepIdx) {
 			if (status === 4) return '#B0B0B0'; // 取消灰
-			// stepIdx 0..3, color filled for steps <= current floor
 			const percent = this.progressPercent(status);
 			const stepPercent = (stepIdx + 1) * 25;
 			return stepPercent <= percent ? '#FF6B00' : '#EDEDED';
@@ -238,121 +269,153 @@ export default {
 .page {
 	background: #f5f6f8;
 	height: 100vh;
-}
-
-.header {
-	padding: 24rpx;
-	background: #fff;
-	border-bottom: 1rpx solid #eee;
-}
-
-.header-title {
-	font-size: 34rpx;
-	font-weight: bold;
+	display: flex;
+	flex-direction: column;
 }
 
 .list {
 	flex: 1;
-	height: calc(100vh - 88rpx);
+	min-height: 0;
 }
 
+/* 单条订单卡片 */
 .order-item {
 	background: #fff;
-	margin: 18rpx 20rpx;
-	border-radius: 12rpx;
-	padding: 18rpx;
-	box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
+	margin: 20rpx;
+	border-radius: 16rpx;
+	padding: 20rpx;
+	box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.05);
+	display: flex;
+	flex-direction: column;
+	gap: 12rpx;
 }
 
+/* 顶部区域 */
 .order-top {
 	display: flex;
 	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 12rpx;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	gap: 8rpx 12rpx;
+}
+
+.order-meta {
+	flex: 1;
+	min-width: 60%;
+	word-break: break-word;
 }
 
 .order-no {
 	font-size: 26rpx;
 	color: #333;
+	word-break: break-all;
 }
 
 .order-time {
 	font-size: 22rpx;
-	color: #999;
-	margin-top: 6rpx;
+	color: #888;
+	margin-top: 4rpx;
 	display: block;
+	word-break: break-all;
 }
 
-.order-price {
-	font-size: 26rpx;
+/* 标签区 */
+.order-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6rpx;
+	max-width: 100%;
+}
+
+.tag {
+	background: #fff5e6;
 	color: #ff6b00;
-	font-weight: bold;
+	padding: 4rpx 12rpx;
+	font-size: 22rpx;
+	border-radius: 8rpx;
+	line-height: 1.5;
+	white-space: normal;
+	word-break: break-word;
 }
 
+/* 主体 */
 .order-body {
 	display: flex;
+	flex-wrap: wrap;
+	gap: 12rpx;
 	margin-top: 8rpx;
 }
 
 .order-thumb {
 	width: 220rpx;
 	height: 140rpx;
-	border-radius: 8rpx;
-	margin-right: 18rpx;
+	border-radius: 10rpx;
+	object-fit: cover;
 	flex-shrink: 0;
 }
 
 .order-info {
 	flex: 1;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	min-width: 0;
 }
 
+/* 标题与数量 */
 .car-row {
 	display: flex;
 	justify-content: space-between;
-	/* 左右分布 */
-	align-items: center;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	gap: 4rpx 10rpx;
 }
 
 .car-name {
 	font-size: 30rpx;
 	color: #222;
 	font-weight: 600;
+	word-break: break-word;
 }
 
 .car-sub {
 	font-size: 24rpx;
 	color: #777;
-	margin-left: 20rpx;
-	/* 和标题拉开点间距 */
 }
 
 /* 进度区域 */
 .progress-wrap {
-	margin-top: 12rpx;
+	margin-top: 14rpx;
+	display: flex;
+	flex-direction: column;
+	gap: 8rpx;
 }
 
 .progress-legend {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
-	margin-bottom: 8rpx;
+	gap: 8rpx 12rpx;
 }
 
 .legend-item {
 	display: flex;
 	align-items: center;
-	margin-right: 12rpx;
+	gap: 6rpx;
+	flex-shrink: 0;
 }
 
 .legend-dot {
 	width: 14rpx;
 	height: 14rpx;
 	border-radius: 7rpx;
-	margin-right: 6rpx;
+	background-color: #ccc;
 }
 
 .legend-text {
 	font-size: 22rpx;
 	color: #666;
+	word-break: break-word;
 }
 
 /* 进度条 */
@@ -368,22 +431,30 @@ export default {
 	height: 100%;
 	background: linear-gradient(90deg, #ff8a00, #ff6b00);
 	width: 0%;
-	transition: width 0.5s;
+	transition: width 0.5s ease;
 }
 
 .status-text {
-	margin-top: 8rpx;
 	font-size: 22rpx;
 	color: #ff6b00;
+	font-weight: 500;
+	word-break: break-word;
+	margin-top: 4rpx;
 }
 
-/* empty / loading */
+/* 空/加载/无更多 */
 .empty,
 .loading,
 .no-more {
 	text-align: center;
 	color: #888;
-	padding: 30rpx 0;
+	padding: 40rpx 0;
 	font-size: 26rpx;
+}
+
+/* 国际化文本溢出时的安全处理 */
+text {
+	word-break: break-word;
+	white-space: normal;
 }
 </style>
