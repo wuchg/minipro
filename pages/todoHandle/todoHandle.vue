@@ -43,7 +43,8 @@ import COS from 'cos-wx-sdk-v5';
 
 const token = uni.getStorageSync('access_token') || '';
 const cos = new COS({
-	SimpleUploadMethod: 'putObject',
+	// SimpleUploadMethod: 'putObject',
+	UseAccelerate: true,
 	getAuthorization: function (options, callback) {
 		uni.request({
 			url: `${getApp().globalData.baseUrl}/sts`,
@@ -147,16 +148,19 @@ export default {
 		},
 		uploadFileToCOS(orderNo, file) {
 			return new Promise((resolve, reject) => {
-				const now = new Date();
+				// const now = new Date();
+				// const year = now.getFullYear();
+				// const month = String(now.getMonth() + 1).padStart(2, '0');
+				// const day = String(now.getDate()).padStart(2, '0');
 
-				// 格式化年月日
-				const year = now.getFullYear();
-				const month = String(now.getMonth() + 1).padStart(2, '0');
-				const day = String(now.getDate()).padStart(2, '0');
+				const year = orderNo.slice(0, 4);
+				const month = orderNo.slice(4, 6);
+				const day = orderNo.slice(6, 8);
+
 				// 构建 Key 路径，例如：orders/2025/11/11/ORDER123/image.jpg
 				const key = `orders/${year}/${month}/${day}/${orderNo}/${file.name}`;
 
-				cos.postObject(
+				cos.uploadFile(
 					{
 						Bucket: 'autobss-1300679246',
 						Region: 'ap-hongkong',

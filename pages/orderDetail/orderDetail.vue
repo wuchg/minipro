@@ -17,18 +17,21 @@
 
 					<view class="card" v-show="item.open">
 						<view class="card-content">
-							<template v-if="!item.img && !item.video && !item.fileName">
+							<template v-if="!item.imgs.length && !item.videos.length && !item.files.length">
 								<view class="card-placeholder fade-in">
 									<image :src="noDataImg" class="placeholder-img"></image>
 									<text class="placeholder-text">暂无数据</text>
 								</view>
 							</template>
 
-							<image v-if="item.img" :src="item.img" mode="widthFix" class="card-media" @tap="previewMedia(item.img)"></image>
-							<video v-if="item.video" :src="item.video" controls class="card-media" @longpress="handleMedia(item.video)"></video>
+							<image v-for="(img, i) in item.imgs" :key="'img-' + i" :src="img" mode="widthFix" class="card-media" @tap="previewMedia(img)"></image>
+							<video v-for="(video, i) in item.videos" :key="'video-' + i" :src="video" controls class="card-media" @longpress="handleMedia(video)"></video>
 
-							<text v-if="item.fileName && item.downloadable" class="card-file" @longpress="handleMedia(item.fileUrl)">{{ item.fileName }}️</text>
-							<text v-else-if="item.fileName" class="card-file no-data">{{ item.fileName }}</text>
+							<template v-if="item.files.length">
+								<text v-for="(file, i) in item.files" :key="'file-' + i" class="card-file" @longpress="handleMedia(file.url)">
+									{{ file.name }}
+								</text>
+							</template>
 						</view>
 					</view>
 				</view>
@@ -57,21 +60,43 @@ export default {
 		toggleCard(idx) {
 			this.timeline[idx].open = !this.timeline[idx].open;
 		},
+		parseMedia(str) {
+			if (!str) return [];
+			return str
+				.split('|')
+				.map((s) => s.trim())
+				.filter(Boolean)
+				.map((s) => `https://autobss-1300679246.cos.accelerate.myqcloud.com` + s);
+		},
 		trackOrder(orderId) {
 			request({ url: '/orders/' + orderId }).then((res) => {
 				if (res.code === 0) {
 					const trackRecords = res.data.stages || [];
-					this.timeline = trackRecords.map((it) => ({
-						title: it.stageLabel,
-						time: it.createdAt,
-						img: it.img ? `${getApp().globalData.baseImgUrl}/` + it.img : null,
-						video: it.video ? `${getApp().globalData.baseImgUrl}/` + it.video : null,
-						fileUrl: it.file ? `${getApp().globalData.baseImgUrl}/` + it.file : null,
-						fileName: it.fileName || '',
-						status: it.createdAt ? 'completed' : 'future',
-						open: true,
-						downloadable: !!it.file
-					}));
+					this.timeline = trackRecords.map((it) => {
+						const files = [];
+						const fileUrls = it.file ? it.file.split('|') : [];
+						const fileNames = it.fileName ? it.fileName.split('|') : [];
+
+						fileUrls.forEach((url, idx) => {
+							if (url) {
+								files.push({
+									url: `https://autobss-1300679246.cos.accelerate.myqcloud.com` + url,
+									name: fileNames[idx] || `文件${idx + 1}`
+								});
+							}
+						});
+
+						return {
+							title: it.stageLabel,
+							time: it.createdAt,
+							imgs: this.parseMedia(it.img),
+							videos: this.parseMedia(it.video),
+							files: files,
+							status: it.createdAt ? 'completed' : 'future',
+							open: true,
+							downloadable: files.length > 0
+						};
+					});
 				} else {
 					uni.showToast({ title: res.msg || '加载失败', icon: 'none' });
 				}

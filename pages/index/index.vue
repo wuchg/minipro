@@ -37,6 +37,18 @@
 </template>
 
 <script>
+function getAcceptLanguage() {
+	const lang = uni.getStorageSync('language') || 'system';
+	if (lang === 'system') {
+		return uni.getLocale() || 'zh-CN';
+	}
+	const map = {
+		zh: 'zh-CN',
+		en: 'en-US',
+		ru: 'ru-RU'
+	};
+	return map[lang] || 'en-US';
+}
 export default {
 	data() {
 		return {
@@ -82,7 +94,7 @@ export default {
 		loadCars(done) {
 			if (this.loading) return;
 			this.loading = true;
-			const url = `${getApp().globalData.baseUrl}/cars?page_num=${this.page}&page_size=${this.pageSize}`;
+			const url = `${getApp().globalData.baseUrl}/cars?page_num=${this.page}&page_size=${this.pageSize}&lang=${getAcceptLanguage()}`;
 			uni.request({
 				url,
 				method: 'GET',

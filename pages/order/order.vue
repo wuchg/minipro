@@ -42,10 +42,10 @@
 			</view>
 
 			<!-- 备注 -->
-			<view class="form-item">
+			<!-- 		<view class="form-item">
 				<text class="label">备注</text>
 				<textarea v-model="form.remark" placeholder="请输入备注" class="textarea" />
-			</view>
+			</view> -->
 
 			<!-- 提交按钮 -->
 			<button class="submit-btn" type="primary" :disabled="submitting" @click="submitOrder">
@@ -101,7 +101,7 @@ export default {
 				carId: '',
 				carName: '',
 				vin: '',
-				remark: '',
+				// remark: '',
 				userId: '',
 				salesName: ''
 			},
