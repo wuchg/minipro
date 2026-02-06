@@ -19,6 +19,17 @@
 				</picker>
 			</view>
 
+			<!-- 车辆颜色 -->
+			<view class="form-item">
+				<text class="label">{{ $t('order.color') }}</text>
+				<picker :range="colorOptions" range-key="label" @change="onColorChange">
+					<view class="picker color-picker">
+						<view v-if="form.colorHex" class="color-dot" :style="{ backgroundColor: form.colorHex }"></view>
+						<text>{{ form.colorLabel || $t('order.selectColor') }}</text>
+					</view>
+				</picker>
+			</view>
+
 			<!-- 个性化配置 Tags -->
 			<view class="form-item">
 				<text class="label">个性化配置</text>
@@ -96,6 +107,7 @@ export default {
 			selectedTags: [],
 			showInput: false, // 是否显示输入框
 			newTag: '',
+			colorOptions: [],
 			salesList: [], //
 			form: {
 				carId: '',
@@ -103,7 +115,10 @@ export default {
 				vin: '',
 				// remark: '',
 				userId: '',
-				salesName: ''
+				salesName: '',
+				colorCode: '',
+				colorLabel: '',
+				colorHex: ''
 			},
 			submitting: false
 		};
@@ -112,6 +127,7 @@ export default {
 		this.loadCars();
 		this.loadTags();
 		this.loadSales();
+		this.loadColorDicts();
 	},
 	methods: {
 		uploadFileToCOS(filePath) {
@@ -230,6 +246,23 @@ export default {
 				uni.showToast({ title: '加载业务员失败', icon: 'none' });
 			}
 		},
+		async loadColorDicts() {
+			try {
+				const res = await request({ url: '/car-color-dicts', method: 'GET' });
+				if (res.code === 0 && Array.isArray(res.data?.colors)) {
+					this.colorOptions = res.data.colors
+						.filter((c) => c.enabled !== false)
+						.map((c) => ({
+							code: c.code,
+							name: c.name,
+							hex: c.hex,
+							label: `${c.name} (${c.hex})`
+						}));
+				}
+			} catch (e) {
+				console.error('loadColorDicts error', e);
+			}
+		},
 		async chooseImage() {
 			const that = this;
 			uni.chooseImage({
@@ -284,6 +317,13 @@ export default {
 			this.form.userId = s.id;
 			this.form.salesName = s.name;
 		},
+		onColorChange(e) {
+			const index = e.detail.value;
+			const c = this.colorOptions[index];
+			this.form.colorCode = c?.code || '';
+			this.form.colorLabel = c?.label || '';
+			this.form.colorHex = c?.hex || '';
+		},
 
 		// 提交订单
 		async submitOrder() {
@@ -305,7 +345,8 @@ export default {
 						userId: this.form.userId,
 						carRemarks: this.form.remark,
 						carTags: this.selectedTags?.join(','),
-						carVin: this.form.vin
+						carVin: this.form.vin,
+						colorCode: this.form.colorCode
 					}
 				});
 				if (res.code === 0) {
@@ -354,6 +395,20 @@ export default {
 	border: 1rpx solid #eee;
 	font-size: 28rpx;
 	color: #333;
+}
+
+.color-picker {
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+}
+
+.color-dot {
+	width: 16rpx;
+	height: 16rpx;
+	border-radius: 50%;
+	border: 1rpx solid #ddd;
+	flex-shrink: 0;
 }
 .textarea {
 	min-height: 160rpx;

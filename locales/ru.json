@@ -56,7 +56,8 @@
   "order": {
     "aggregateTitle": "Сводка заказов",
     "exportExcel": "Экспорт Excel",
-    "color": "Цвет",
+		"color": "Цвет",
+		"selectColor": "Выберите цвет",
     "model": "Модель",
     "remark": "Примечание",
     "empty": "Нет заказов, оформите новый!",

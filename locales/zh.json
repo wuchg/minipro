@@ -56,7 +56,8 @@
   "order": {
     "aggregateTitle": "订单聚合信息",
     "exportExcel": "导出 Excel",
-    "color": "颜色",
+		"color": "颜色",
+		"selectColor": "请选择颜色",
     "model": "车型",
     "remark": "备注",
     "empty": "暂无订单，快去下单吧",

@@ -58,7 +58,8 @@
   "order": {
     "aggregateTitle": "Order Summary",
     "exportExcel": "Export Excel",
-    "color": "Color",
+		"color": "Color",
+		"selectColor": "Select color",
     "model": "Model",
     "remark": "Remark",
     "empty": "No orders yet, go place one!",

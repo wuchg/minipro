@@ -326,7 +326,7 @@ export default {
 }
 
 .vin {
-	width: 140rpx;
+	width: 70rpx;
 }
 
 .car {
@@ -337,7 +337,7 @@ export default {
 }
 
 .color {
-	width: 120rpx;
+	width: 100rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
