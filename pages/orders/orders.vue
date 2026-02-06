@@ -1,49 +1,49 @@
 <template>
 	<view class="page">
+		<view class="search-bar">
+			<input v-model="searchVin" class="search-input" :placeholder="$t('order.searchVinLast4')" maxlength="4" @input="onSearchInput" />
+			<text v-if="searchVin" class="search-clear" @click="clearSearch">{{ $t('common.clear') }}</text>
+		</view>
 		<scroll-view class="list" scroll-y :lower-threshold="100" @scrolltolower="onReachBottom" @scrolltoupper="onScrollTop">
-			<uni-swipe-action>
-				<block v-if="orders.length">
-					<uni-swipe-action-item v-for="order in orders" :key="order.id" :right-options="swipeOptions" @click="onSwipeClick($event, order)">
-						<view class="order-item">
-							<view class="order-top">
-								<view class="order-meta">
-									<!-- <text class="order-no">{{ $t('order.orderNo') }}：{{ order.orderNo }}</text>-->
-									<text class="order-time">{{ $t('order.vin') }}：{{ order.vin }}</text>
-								</view>
-								<view class="order-tags">
-									<text v-for="(tag, i) in splitTags(order.tags)" :key="i" class="tag">{{ tag }}</text>
-								</view>
+			<block v-if="orders.length">
+				<view v-for="order in orders" :key="order.id" class="order-item">
+					<view class="order-top">
+						<view class="order-meta">
+							<!-- <text class="order-no">{{ $t('order.orderNo') }}：{{ order.orderNo }}</text>-->
+							<text class="order-time">{{ $t('order.vin') }}：{{ order.vin }}</text>
+						</view>
+						<view class="order-tags">
+							<text v-for="(tag, i) in splitTags(order.tags)" :key="i" class="tag">{{ tag }}</text>
+						</view>
+					</view>
+
+					<view class="order-body" @click.stop="openOrder(order)">
+						<image class="order-thumb" :src="order.thumb" mode="aspectFill" />
+						<view class="order-info">
+							<view class="car-row">
+								<text class="car-name">{{ order.title }}</text>
+								<!-- <text class="car-sub">{{ $t('order.quantity') }}：{{ order.quantity }}</text> -->
 							</view>
-
-							<view class="order-body" @click.stop="openOrder(order)">
-								<image class="order-thumb" :src="order.thumb" mode="aspectFill" />
-								<view class="order-info">
-									<view class="car-row">
-										<text class="car-name">{{ order.title }}</text>
-										<!-- <text class="car-sub">{{ $t('order.quantity') }}：{{ order.quantity }}</text> -->
-									</view>
-									<!-- 进度显示 -->
-									<view class="progress-wrap">
-										<view class="progress-legend">
-											<view v-for="(step, idx) in progressSteps" :key="idx" class="legend-item">
-												<view class="legend-dot" :style="{ backgroundColor: orderProgressColor(order.status, idx) }"></view>
-												<text class="legend-text">{{ step }}</text>
-											</view>
-										</view>
-
-										<view class="progress-bar">
-											<view class="progress-fill" :style="{ width: progressPercent(order.status) + '%' }"></view>
-										</view>
-
-										<text class="status-text">{{ statusText(order.status) }}</text>
+							<!-- 进度显示 -->
+							<view class="progress-wrap">
+								<view class="progress-legend">
+									<view v-for="(step, idx) in progressSteps" :key="idx" class="legend-item">
+										<view class="legend-dot" :style="{ backgroundColor: orderProgressColor(order.status, idx) }"></view>
+										<text class="legend-text">{{ step }}</text>
 									</view>
 								</view>
+
+								<view class="progress-bar">
+									<view class="progress-fill" :style="{ width: progressPercent(order.status) + '%' }"></view>
+								</view>
+
+								<text class="status-text">{{ statusText(order.status) }}</text>
 							</view>
 						</view>
-					</uni-swipe-action-item>
-				</block>
-			</uni-swipe-action>
-			<!-- <view v-else class="empty">{{ $t('order.empty') }}</view> -->
+					</view>
+				</view>
+			</block>
+			<view v-else class="empty">{{ $t('order.empty') }}</view>
 			<view class="loading" v-if="loading">{{ $t('common.loading') }}</view>
 			<view class="no-more" v-if="noMore">{{ $t('common.noMore') }}</view>
 		</scroll-view>
@@ -56,19 +56,11 @@ import { request } from '@/common/request.js';
 export default {
 	data() {
 		return {
-			// 右滑出现按钮
-			swipeOptions: [
-				{
-					text: '删除',
-					style: {
-						backgroundColor: '#FF3B30',
-						color: '#fff'
-					}
-				}
-			],
 			page: 1,
 			pageSize: 10,
 			orders: [],
+			searchVin: '',
+			searchTimer: null,
 			loading: false,
 			noMore: false,
 			progressSteps: [this.$t('order.steps.1'), this.$t('order.steps.2'), this.$t('order.steps.3'), this.$t('order.steps.4')]
@@ -86,11 +78,23 @@ export default {
 		this.loadOrders(true);
 	},
 	methods: {
-		// 处理滑动按钮点击
-		onSwipeClick(e, order) {
-			if (e.content.text === '删除') {
-				this.deleteOrder(order);
-			}
+		onSearchInput(e) {
+			this.searchVin = (e.detail && e.detail.value) || '';
+			if (this.searchTimer) clearTimeout(this.searchTimer);
+			this.searchTimer = setTimeout(() => {
+				this.page = 1;
+				this.noMore = false;
+				this.orders = [];
+				this.loadOrders(true);
+			}, 300);
+		},
+		clearSearch() {
+			this.searchVin = '';
+			if (this.searchTimer) clearTimeout(this.searchTimer);
+			this.page = 1;
+			this.noMore = false;
+			this.orders = [];
+			this.loadOrders(true);
 		},
 		splitTags(tags) {
 			if (!tags) return [];
@@ -140,8 +144,10 @@ export default {
 		loadOrders(isRefresh = false) {
 			if (this.loading) return;
 			this.loading = true;
+			const keyword = (this.searchVin || '').trim();
+			const keywordParam = keyword ? '&keyword=' + encodeURIComponent(keyword) : '';
 			request({
-				url: '/orders?page_size=' + this.pageSize + '&page_num=' + this.page
+				url: '/orders?page_size=' + this.pageSize + '&page_num=' + this.page + keywordParam
 			})
 				.then((res) => {
 					// 兼容各种后端返回情况
@@ -271,6 +277,29 @@ export default {
 	height: 100vh;
 	display: flex;
 	flex-direction: column;
+}
+
+.search-bar {
+	display: flex;
+	align-items: center;
+	gap: 16rpx;
+	padding: 20rpx;
+	background: #f5f6f8;
+}
+
+.search-input {
+	flex: 1;
+	background: #fff;
+	border: 1rpx solid #eee;
+	border-radius: 12rpx;
+	padding: 18rpx 20rpx;
+	font-size: 26rpx;
+	color: #333;
+}
+
+.search-clear {
+	font-size: 24rpx;
+	color: #ff6b00;
 }
 
 .list {

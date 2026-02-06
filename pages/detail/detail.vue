@@ -8,9 +8,6 @@
 			</swiper-item>
 		</swiper>
 
-		<!-- 车辆简介 -->
-		<view class="car-title">{{ car.summary }}</view>
-
 		<!-- 参数 + 配置表格 -->
 		<view class="section">
 			<view class="section-title">Технические характеристики</view>
@@ -33,6 +30,9 @@
 				</view>
 			</view>
 		</view>
+
+		<!-- 车辆简介, 优先显示 description, 如果description是空，则显示 summary -->
+		<view class="car-title">{{ displayDesc }}</view>
 
 		<!-- 视频介绍 -->
 		<view class="section">
@@ -79,6 +79,12 @@ export default {
 			images: [], // 存储含宽高信息的图片
 			loaded: []
 		};
+	},
+	computed: {
+		displayDesc() {
+			const d = this.car.description?.trim();
+			return d ? d : this.car.summary;
+		}
 	},
 	async onLoad(query) {
 		this.carId = query.id || null;
@@ -183,6 +189,7 @@ export default {
 	padding: 30rpx 20rpx;
 	background-color: #fff;
 	border-radius: 16rpx;
+	white-space: pre-line;
 	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 
@@ -228,7 +235,7 @@ export default {
 
 /* 左列样式：统一浅灰 */
 .table-cell-label {
-	flex: 0.4;
+	flex: 0.6;
 	font-weight: 600;
 	color: #333;
 	display: flex;
@@ -238,7 +245,7 @@ export default {
 
 /* 右列样式：交替底色 */
 .table-cell-value {
-	flex: 0.6;
+	flex: 0.4;
 	justify-content: flex-end;
 	text-align: right;
 	color: #555;
