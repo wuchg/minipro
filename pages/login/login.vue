@@ -35,13 +35,6 @@
 </template>
 
 <script lang="ts">
-import { TUILogin } from '@tencentcloud/tui-core';
-
-let vueVersion = 2;
-// #ifdef VUE3
-vueVersion = 3;
-// #endif
-
 export default {
 	data() {
 		return {
@@ -57,25 +50,6 @@ export default {
 		this.redirect = query.redirect ? decodeURIComponent(query.redirect) : '/pages/index/index';
 	},
 	methods: {
-		async initIM(IMID: string, IMToken: string) {
-			if (!IMToken || !IMID) return;
-			this.loginText = '正在连接IM服务...';
-			try {
-				await TUILogin.login({
-					SDKAppID: Number(`${getApp().globalData.IMAppID}`),
-					userID: IMID,
-					userSig: IMToken,
-					useUploadPlugin: true,
-					framework: `vue${vueVersion}`
-				});
-				console.log('IM 登录成功');
-			} catch (e) {
-				console.error('IM 登录失败', e);
-			}
-			uni.setStorageSync('IMID', IMID);
-			uni.setStorageSync('IM_token', IMToken);
-			uni.$emit('userChanged', { IMID });
-		},
 		async doLogin() {
 			if (!this.username || !this.password) {
 				return uni.showToast({ title: '请输入账号和密码', icon: 'none' });
@@ -93,10 +67,9 @@ export default {
 					if (res.data.code === 0) {
 						const data = res.data.data;
 						uni.setStorageSync('access_token', data.access_token);
-						await this.initIM(data.im_user_id, data.im_token);
 						this.loginText = '登录成功';
 						setTimeout(() => {
-							const tabPages = ['/pages/index/index', '/pages/profile/profile', '/pages/workBench/workBench', '/pages/conversations/conversations'];
+							const tabPages = ['/pages/index/index', '/pages/inventory/inventory', '/pages/workBench/workBench', '/pages/profile/profile'];
 							if (tabPages.includes(this.redirect)) {
 								uni.switchTab({ url: this.redirect });
 							} else {

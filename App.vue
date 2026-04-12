@@ -23,7 +23,6 @@ export default {
 		console.log('App Hide');
 	},
 	globalData: {
-		IMAppID: 1600107222,
 		baseUrl: 'https://www.autoboss.cloud/api',
 		// baseUrl: 'http://127.0.0.1:8888/api',
 		baseImgUrl: 'https://img.autoboss.cloud'

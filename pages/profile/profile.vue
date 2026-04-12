@@ -58,7 +58,6 @@
 import { request } from '@/common/request.js';
 import { t } from '@/common/i18nUtil.js';
 
-import { TUILogin } from '@tencentcloud/tui-core';
 import { getCurrentInstance } from 'vue';
 export default {
 	data() {
@@ -226,11 +225,6 @@ export default {
 				success: (res) => {
 					if (res.confirm) {
 						uni.removeStorageSync('access_token');
-						uni.removeStorageSync('IMID');
-						uni.removeStorageSync('IM_token');
-						try {
-							TUILogin?.logout();
-						} catch (e) {}
 						uni.navigateTo({ url: '/pages/login/login' });
 					}
 				}

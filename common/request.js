@@ -4,8 +4,6 @@ const baseUrl = 'https://www.autoboss.cloud/api'
 function handleUnauthorized() {
 	// 清除 token
 	uni.removeStorageSync('access_token')
-	uni.removeStorageSync('IMID');
-	uni.removeStorageSync('IM_token');
 	// 当前页面路径
 	const pages = getCurrentPages()
 	const currentPage = pages[pages.length - 1]

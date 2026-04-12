@@ -1,5 +1,10 @@
 {
 	"pages": [{
+			"path": "pages/inventory/inventory",
+			"style": {
+				"navigationBarTitleText": "Склад"
+			}
+		}, {
 			"path": "pages/index/index",
 			"style": {
 				"navigationBarTitleText": "",
@@ -38,6 +43,7 @@
 				"navigationBarTitleText": ""
 			}
 		},
+
 		{
 			"path": "pages/login/login",
 			"style": {
@@ -73,49 +79,6 @@
 			"style": {
 				"navigationBarTitleText": ""
 			}
-		},
-		{
-			"path": "components/TUIConversation/index",
-			"style": {
-				"navigationBarTitleText": ""
-			}
-		}, {
-			"path": "components/TUIChat/index",
-			"style": {
-				"navigationBarTitleText": "",
-				"app-plus": {
-					"softinputMode": "adjustResize",
-					"titleNView": {
-						"buttons": [{
-							"type": "menu"
-						}]
-					}
-				},
-				"h5": {
-					"titleNView": {
-						"buttons": []
-					}
-				}
-			}
-		},
-		// 集成 chat 组件，必须配置该路径: 视频播放
-		{
-			"path": "components/TUIChat/video-play",
-			"style": {
-				"navigationBarTitleText": ""
-			}
-		},
-		{
-			"path": "components/TUIChat/web-view",
-			"style": {
-				"navigationBarTitleText": ""
-			}
-		},
-		{
-			"path": "components/TUISearch/index",
-			"style": {
-				"navigationBarTitleText": ""
-			}
 		}
 	],
 	"globalStyle": {
@@ -131,16 +94,16 @@
 		"backgroundColor": "#ffffff",
 		"borderStyle": "black",
 		"list": [{
+				"pagePath": "pages/inventory/inventory",
+				"text": "Склад",
+				"iconPath": "static/icons/chat_gr.png",
+				"selectedIconPath": "static/icons/chat.png"
+			},
+			{
 				"pagePath": "pages/index/index",
 				"text": "Главная",
 				"iconPath": "static/icons/index_gr.png",
 				"selectedIconPath": "static/icons/index.png"
-			},
-			{
-				"pagePath": "components/TUIConversation/index",
-				"text": "Чат",
-				"iconPath": "static/icons/chat_gr.png",
-				"selectedIconPath": "static/icons/chat.png"
 			},
 
 			{

@@ -1,6 +1,3 @@
-import TencentCloudChat from "@tencentcloud/chat";
-import TUICore from "@tencentcloud/tui-core";
-
 import App from './App'
 
 import en from './locales/en.json'
