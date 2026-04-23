@@ -1,28 +1,44 @@
 <template>
 	<view class="page">
-		<scroll-view class="excel-scroll" scroll-x enhanced show-scrollbar>
-			<view class="excel-sheet">
-				<view class="excel-row header-row">
-					<view class="head-cell model-col">Модель</view>
-					<view class="head-cell color-col">Цвет</view>
-					<view class="head-cell stock-col">Кол-во</view>
-					<view class="head-cell usd-col">Цена</view>
-				</view>
-
-				<scroll-view class="sheet-body-scroll" scroll-y enhanced show-scrollbar>
-					<view class="sheet-body">
-						<template v-for="(row, index) in paddedRows" :key="index">
-							<view v-if="row.modelSpan" class="body-cell model-col model-cell" :style="cellStyle(index, 1, row.modelSpan)">
-								{{ row.model }}
-							</view>
-							<view class="body-cell color-col" :style="cellStyle(index, 2)">{{ row.color }}</view>
-							<view class="body-cell stock-col stock-cell" :style="cellStyle(index, 3)">{{ row.stock }}</view>
-							<view class="body-cell usd-col usd-cell" :style="cellStyle(index, 4)">{{ row.usd }}</view>
-						</template>
-					</view>
-				</scroll-view>
+		<view class="inventory-sheet">
+			<view class="model-header">
+				<view class="head-cell">Марка</view>
 			</view>
-		</scroll-view>
+
+			<scroll-view class="model-scroll" scroll-y enhanced show-scrollbar refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="refreshInventory">
+				<view v-if="loading && !models.length" class="empty-state">Загрузка...</view>
+				<view v-else-if="!models.length" class="empty-state">Нет данных</view>
+
+				<view v-for="model in models" :key="model.id" class="model-group">
+					<view :class="['model-row', expandedModelId === model.id ? 'model-row-open' : '']" hover-class="model-row-active" @click="toggleModel(model)">
+						<view class="model-name">
+							<view class="model-accent"></view>
+							<text class="model-title">{{ model.modelName }}</text>
+							<text :class="['model-chevron', expandedModelId === model.id ? 'model-chevron-open' : '']">⌄</text>
+						</view>
+					</view>
+
+					<view v-if="expandedModelId === model.id" class="detail-panel">
+						<view class="detail-header">
+							<view class="detail-cell model-detail-col">Модель</view>
+							<view class="detail-cell color-col">Цвет</view>
+							<view class="detail-cell quantity-col">Кол-во</view>
+							<view class="detail-cell price-col">Цена</view>
+						</view>
+
+						<view v-if="loadingItems[model.id]" class="detail-empty">Загрузка...</view>
+						<view v-else-if="!modelItems[model.id] || !modelItems[model.id].length" class="detail-empty">Нет данных</view>
+
+						<view v-for="item in modelItems[model.id]" :key="item.id" class="detail-row">
+							<view class="detail-cell model-detail-col">{{ item.modelName || '-' }}</view>
+							<view class="detail-cell color-col">{{ item.color || '-' }}</view>
+							<view class="detail-cell quantity-col">{{ item.quantity }}</view>
+							<view class="detail-cell price-col price-cell">{{ formatPrice(item.price) }}</view>
+						</view>
+					</view>
+				</view>
+			</scroll-view>
+		</view>
 	</view>
 </template>
 
@@ -32,83 +48,87 @@ import { request } from '../../common/request.js';
 export default {
 	data() {
 		return {
-			minVisibleRows: 14,
-			rows: []
+			expandedModelId: '',
+			loading: false,
+			loadingItems: {},
+			modelItems: {},
+			models: [],
+			refreshing: false
 		};
 	},
 	onLoad() {
-		this.calculateMinVisibleRows();
-		this.loadInventory();
-	},
-	computed: {
-		displayRows() {
-			return this.rows.map((row, index) => {
-				const previousModel = index > 0 ? this.rows[index - 1].model : '';
-				if (row.model === previousModel) {
-					return {
-						...row,
-						modelSpan: 0
-					};
-				}
-
-				let modelSpan = 1;
-				for (let i = index + 1; i < this.rows.length; i += 1) {
-					if (this.rows[i].model !== row.model) {
-						break;
-					}
-					modelSpan += 1;
-				}
-
-				return {
-					...row,
-					modelSpan
-				};
-			});
-		},
-		paddedRows() {
-			const rows = [...this.displayRows];
-			const placeholderCount = Math.max(this.minVisibleRows - rows.length, 0);
-			for (let i = 0; i < placeholderCount; i += 1) {
-				rows.push({
-					model: '',
-					modelSpan: 1,
-					color: '',
-					stock: '',
-					usd: '',
-					isPlaceholder: true
-				});
-			}
-			return rows;
-		}
+		this.loadModels();
 	},
 	methods: {
-		async loadInventory() {
+		async loadModels() {
+			this.loading = true;
+
 			try {
 				const res = await request({
-					url: '/inventory'
+					url: '/pricing-inventory/models'
 				});
-				const list = Array.isArray(res?.data) ? res.data : [];
-				this.rows = list
-					.filter((item, index) => !this.isHeaderRow(item, index))
-					.map((item) => this.normalizeRow(item));
+				const list = Array.isArray(res?.data?.items) ? res.data.items : [];
+				this.models = list.map((item) => ({
+					id: this.stringifyValue(item.id),
+					modelName: this.stringifyValue(item.modelName)
+				}));
 			} catch (error) {
-				console.error('load inventory failed', error);
-				this.rows = [];
+				console.error('load pricing inventory models failed', error);
+				this.models = [];
+			} finally {
+				this.loading = false;
+				this.refreshing = false;
 			}
 		},
-		normalizeRow(item = {}) {
-			return {
-				model: this.stringifyValue(item.model),
-				color: this.stringifyValue(item.color),
-				stock: this.stringifyValue(item.stock),
-				usd: this.formatPrice(item.usd)
-			};
-		},
-		isHeaderRow(item = {}, index = 0) {
-			if (index !== 0) {
-				return false;
+		async loadModelItems(modelId) {
+			if (!modelId || this.modelItems[modelId]) {
+				return;
 			}
-			return item.model === '车型' || item.color === '颜色/Цвет' || item.stock === '剩余数量';
+
+			this.$set(this.loadingItems, modelId, true);
+
+			try {
+				const res = await request({
+					url: `/pricing-inventory/models/${modelId}/items`
+				});
+				const list = Array.isArray(res?.data?.items) ? res.data.items : [];
+				this.$set(
+					this.modelItems,
+					modelId,
+					list.map((item) => ({
+						color: this.resolveColor(item),
+						id: this.stringifyValue(item.id),
+						modelName: this.stringifyValue(item.modelName),
+						price: item.price,
+						quantity: Number(item.quantity || 0)
+					}))
+				);
+			} catch (error) {
+				console.error('load pricing inventory items failed', error);
+				this.$set(this.modelItems, modelId, []);
+			} finally {
+				this.$set(this.loadingItems, modelId, false);
+			}
+		},
+		refreshInventory() {
+			this.refreshing = true;
+			this.expandedModelId = '';
+			this.modelItems = {};
+			this.loadingItems = {};
+			this.loadModels();
+		},
+		toggleModel(model) {
+			if (!model || !model.id) {
+				return;
+			}
+
+			if (this.expandedModelId === model.id) {
+				this.expandedModelId = '';
+				return;
+			}
+
+			this.expandedModelId = model.id;
+			this.loadModelItems(model.id);
 		},
 		stringifyValue(value) {
 			if (value === undefined || value === null || value === '') {
@@ -116,9 +136,24 @@ export default {
 			}
 			return String(value);
 		},
+		getPayloadValue(payload = {}, keys = []) {
+			for (const key of keys) {
+				const value = payload[key];
+				if (value !== undefined && value !== null && value !== '') {
+					return value;
+				}
+			}
+			return '';
+		},
+		resolveColor(item = {}) {
+			return this.stringifyValue(
+				item.color ||
+					this.getPayloadValue(item.payload || {}, ['颜色', '颜色/Цвет', 'Цвет', '外观颜色', '车身颜色'])
+			);
+		},
 		formatPrice(value) {
 			if (value === undefined || value === null || value === '') {
-				return '';
+				return '-';
 			}
 			if (typeof value === 'string' && value.includes('$')) {
 				return value;
@@ -128,21 +163,6 @@ export default {
 				return String(value);
 			}
 			return `$${normalized.toLocaleString('en-US')}`;
-		},
-		calculateMinVisibleRows() {
-			const { windowHeight = 667, windowWidth = 375 } = uni.getSystemInfoSync();
-			const pxPerRpx = windowWidth / 750;
-			const verticalPadding = (12 + 24) * pxPerRpx;
-			const headerHeight = 74 * pxPerRpx;
-			const rowHeight = 72 * pxPerRpx;
-			const availableHeight = Math.max(windowHeight - verticalPadding - headerHeight, rowHeight * 14);
-			this.minVisibleRows = Math.max(Math.ceil(availableHeight / rowHeight), 14);
-		},
-		cellStyle(rowIndex, column, span = 1) {
-			return {
-				gridColumn: String(column),
-				gridRow: `${rowIndex + 1} / span ${span}`
-			};
 		}
 	}
 };
@@ -156,95 +176,161 @@ export default {
 	box-sizing: border-box;
 }
 
-.excel-scroll {
+.inventory-sheet {
 	width: 100%;
-	white-space: nowrap;
-}
-
-.excel-sheet {
-	width: 716rpx;
 	background: #fff;
 	border: 1rpx solid #f3dfcc;
+	box-sizing: border-box;
 }
 
-.excel-row {
-	display: flex;
-	align-items: stretch;
+.model-header,
+.model-row {
+	display: grid;
+	grid-template-columns: 1fr;
 }
 
-.head-cell,
-.body-cell {
+.head-cell {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	box-sizing: border-box;
+	height: 74rpx;
 	border-right: 1rpx solid #f3dfcc;
 	border-bottom: 1rpx solid #f3dfcc;
-	text-align: center;
-	padding: 0 8rpx;
-	white-space: pre-line;
-	word-break: break-word;
-}
-
-.head-cell {
-	height: 74rpx;
 	font-size: 27rpx;
 	font-weight: 700;
 	color: #fff;
 	background: linear-gradient(180deg, #ff9a00 0%, #ff6b00 100%);
 }
 
-.body-cell {
-	font-size: 24rpx;
-	color: #2b2b2b;
-	background: #fff;
+.head-cell:last-child {
+	border-right: 0;
 }
 
-.sheet-body {
-	display: grid;
-	grid-template-columns: 176rpx 156rpx 126rpx 258rpx;
-	grid-auto-rows: 72rpx;
-}
-
-.sheet-body-scroll {
+.model-scroll {
 	height: calc(100vh - 36rpx - 74rpx);
 }
 
-.model-col {
-	width: 176rpx;
-	min-width: 176rpx;
+.model-group {
+	border-bottom: 1rpx solid #f3dfcc;
 }
 
-.color-col {
-	width: 156rpx;
-	min-width: 156rpx;
+.model-row {
+	min-height: 86rpx;
+	background: #fff;
 }
 
-.stock-col {
-	width: 126rpx;
-	min-width: 126rpx;
+.model-row-open {
+	background: #fffaf4;
 }
 
-.usd-col {
-	width: 258rpx;
-	min-width: 258rpx;
+.model-row-active {
+	background: #fff3e5;
 }
 
-.model-cell {
-	font-size: 25rpx;
+.model-name {
+	display: flex;
+	align-items: center;
+	box-sizing: border-box;
+	padding: 10rpx;
+}
+
+.model-name {
+	justify-content: flex-start;
+	gap: 10rpx;
+	font-size: 26rpx;
 	line-height: 1.28;
-	padding: 6rpx 10rpx;
-	background: #fff;
 	color: #7a4a18;
+	word-break: break-word;
 }
 
-.stock-cell {
-	background: #fff;
+.model-accent {
+	width: 6rpx;
+	height: 42rpx;
+	border-radius: 6rpx;
+	background: #ff7a00;
+	flex: 0 0 auto;
 }
 
-.usd-cell {
-	font-size: 34rpx;
+.model-title {
+	flex: 1;
+}
+
+.model-chevron {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 34rpx;
+	height: 34rpx;
+	border-radius: 50%;
+	background: #fff1df;
+	color: #ff6b00;
+	font-size: 28rpx;
+	line-height: 1;
+	transition: transform 0.2s ease;
+	flex: 0 0 auto;
+}
+
+.model-chevron-open {
+	transform: rotate(180deg);
+}
+
+.detail-panel {
+	background: #fffaf4;
+	border-top: 1rpx solid #f3dfcc;
+}
+
+.detail-header,
+.detail-row {
+	display: grid;
+	grid-template-columns: 1fr 148rpx 108rpx 188rpx;
+}
+
+.detail-cell {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	min-height: 68rpx;
+	border-right: 1rpx solid #f3dfcc;
+	border-bottom: 1rpx solid #f3dfcc;
+	padding: 8rpx;
+	font-size: 24rpx;
+	color: #2b2b2b;
+	text-align: center;
+	word-break: break-word;
+}
+
+.detail-cell:last-child {
+	border-right: 0;
+}
+
+.detail-header .detail-cell {
+	min-height: 58rpx;
+	font-size: 23rpx;
+	font-weight: 700;
+	color: #7a4a18;
+	background: #fff1df;
+}
+
+.price-cell {
+	font-size: 30rpx;
 	font-family: Georgia, 'Times New Roman', serif;
 	color: #ff6b00;
+}
+
+.empty-state,
+.detail-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 180rpx;
+	color: #999;
+	font-size: 26rpx;
+}
+
+.detail-empty {
+	min-height: 92rpx;
+	background: #fffaf4;
 }
 </style>
