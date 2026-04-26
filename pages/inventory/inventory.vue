@@ -29,11 +29,17 @@
 						<view v-if="loadingItems[model.id]" class="detail-empty">Загрузка...</view>
 						<view v-else-if="!modelItems[model.id] || !modelItems[model.id].length" class="detail-empty">Нет данных</view>
 
-						<view v-for="item in modelItems[model.id]" :key="item.id" class="detail-row">
-							<view class="detail-cell model-detail-col">{{ item.modelName || '-' }}</view>
-							<view class="detail-cell color-col">{{ item.color || '-' }}</view>
-							<view class="detail-cell quantity-col">{{ item.quantity }}</view>
-							<view class="detail-cell price-col price-cell">{{ formatPrice(item.price) }}</view>
+						<view v-for="group in buildGroupedItems(modelItems[model.id])" :key="group.key" class="detail-group">
+							<view class="detail-merged-model">
+								<text class="detail-merged-model-text">{{ group.modelName || '-' }}</text>
+							</view>
+							<view class="detail-group-rows">
+								<view v-for="item in group.items" :key="item.id" class="detail-row-merged">
+									<view class="detail-cell color-col">{{ item.color || '-' }}</view>
+									<view class="detail-cell quantity-col">{{ item.quantity }}</view>
+									<view class="detail-cell price-col price-cell">{{ formatPrice(item.price) }}</view>
+								</view>
+							</view>
 						</view>
 					</view>
 				</view>
@@ -150,6 +156,23 @@ export default {
 				item.color ||
 					this.getPayloadValue(item.payload || {}, ['颜色', '颜色/Цвет', 'Цвет', '外观颜色', '车身颜色'])
 			);
+		},
+		buildGroupedItems(items = []) {
+			const groups = [];
+			for (const item of items) {
+				const modelName = this.stringifyValue(item?.modelName) || '-';
+				const lastGroup = groups[groups.length - 1];
+				if (lastGroup && lastGroup.modelName === modelName) {
+					lastGroup.items.push(item);
+					continue;
+				}
+				groups.push({
+					items: [item],
+					key: `${modelName}-${item?.id || groups.length}`,
+					modelName
+				});
+			}
+			return groups;
 		},
 		formatPrice(value) {
 			if (value === undefined || value === null || value === '') {
@@ -280,10 +303,50 @@ export default {
 	border-top: 1rpx solid #f3dfcc;
 }
 
-.detail-header,
-.detail-row {
+.detail-header {
 	display: grid;
-	grid-template-columns: 1fr 148rpx 108rpx 188rpx;
+	grid-template-columns: 1fr 148rpx 108rpx 132rpx;
+}
+
+.detail-group {
+	display: grid;
+	grid-template-columns: 1fr 388rpx;
+	background: #fff;
+}
+
+.detail-group-rows {
+	display: flex;
+	flex-direction: column;
+}
+
+.detail-row-merged {
+	display: grid;
+	grid-template-columns: 148rpx 108rpx 132rpx;
+}
+
+.detail-merged-model {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	padding: 0 14rpx;
+	border-right: 1rpx solid #f3dfcc;
+	border-bottom: 1rpx solid #f3dfcc;
+	background: #fff8f0;
+	box-sizing: border-box;
+	overflow: hidden;
+}
+
+.detail-merged-model-text {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+	font-size: 25rpx;
+	font-weight: 600;
+	line-height: 1.35;
+	color: #6f4317;
+	text-align: left;
+	word-break: break-word;
 }
 
 .detail-cell {
@@ -305,18 +368,39 @@ export default {
 	border-right: 0;
 }
 
+
 .detail-header .detail-cell {
 	min-height: 58rpx;
-	font-size: 23rpx;
+	font-size: 22rpx;
 	font-weight: 700;
 	color: #7a4a18;
 	background: #fff1df;
 }
 
+
+
 .price-cell {
 	font-size: 30rpx;
 	font-family: Georgia, 'Times New Roman', serif;
 	color: #ff6b00;
+	white-space: nowrap;
+	word-break: keep-all;
+}
+
+
+.detail-group-rows .color-col,
+.detail-header .model-detail-col,
+.detail-header .color-col {
+	justify-content: flex-start;
+	text-align: left;
+	padding-left: 12rpx;
+}
+
+.detail-group-rows .price-col,
+.detail-header .price-col {
+	justify-content: flex-end;
+	text-align: right;
+	padding-right: 12rpx;
 }
 
 .empty-state,
