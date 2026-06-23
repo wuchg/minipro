@@ -69,7 +69,7 @@ export default {
 						uni.setStorageSync('access_token', data.access_token);
 						this.loginText = '登录成功';
 						setTimeout(() => {
-							const tabPages = ['/pages/index/index', '/pages/inventory/inventory', '/pages/workBench/workBench', '/pages/profile/profile'];
+							const tabPages = ['/pages/inventory/inventory', '/pages/orders/orders', '/pages/profile/profile'];
 							if (tabPages.includes(this.redirect)) {
 								uni.switchTab({ url: this.redirect });
 							} else {

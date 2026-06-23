@@ -3,6 +3,7 @@
   "common": {
     "loading": "加载中...",
     "noMore": "没有更多了",
+    "noData": "暂无数据",
     "clear": "清除",
     "serverError": "服务器返回异常",
     "loadFail": "加载失败"
@@ -14,6 +15,9 @@
   "settings": {
     "language": "语言设置",
     "changePassword": "修改密码"
+  },
+  "workbench": {
+    "title": "工作台"
   },
   "language": {
     "system": "跟随系统",
@@ -62,6 +66,12 @@
     "remark": "备注",
     "empty": "暂无订单，快去下单吧",
     "orderNo": "订单号",
+    "createdAt": "下单时间",
+    "statusAll": "全部状态",
+    "currentStatus": "当前状态",
+    "pending": "待处理",
+    "done": "已完成",
+    "itemsUnit": "项",
     "searchVinLast4": "请输入 VIN 后四位",
     "vin": "VIN",
     "quantity": "数量",

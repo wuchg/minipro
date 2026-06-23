@@ -5,6 +5,7 @@
   "common": {
     "loading": "Loading...",
     "noMore": "No more orders",
+    "noData": "No data",
     "clear": "Clear",
     "serverError": "Server returned an error",
     "loadFail": "Failed to load"
@@ -16,6 +17,9 @@
   "settings": {
     "language": "Language Settings",
     "changePassword": "Change Password"
+  },
+  "workbench": {
+    "title": "Workbench"
   },
   "language": {
     "system": "Follow System",
@@ -64,6 +68,12 @@
     "remark": "Remark",
     "empty": "No orders yet, go place one!",
     "orderNo": "Order No",
+    "createdAt": "Order time",
+    "statusAll": "All status",
+    "currentStatus": "Current status",
+    "pending": "Pending",
+    "done": "Done",
+    "itemsUnit": "items",
     "searchVinLast4": "Enter last 4 of VIN",
     "vin": "VIN",
     "quantity": "Quantity",

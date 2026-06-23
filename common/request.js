@@ -40,7 +40,7 @@ export function request(options) {
 
 	return new Promise((resolve, reject) => {
 		uni.request({
-			url: baseUrl + options.url, // 自动拼接
+			url: (options.baseUrl || baseUrl) + options.url, // 自动拼接（可按调用传 baseUrl 覆盖）
 			method: options.method || 'GET',
 			data: options.data || {},
 			header: {

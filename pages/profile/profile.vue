@@ -15,6 +15,17 @@
 			<text class="role-text">{{ user.roleName }}</text>
 		</view>
 
+		<!-- 工作台入口 -->
+		<view class="setting-card">
+			<view class="setting-item" @click="goWorkbench">
+				<view class="item-label">
+					<image src="/static/icons/w.png" class="item-icon" mode="aspectFit" />
+					<text>{{ $t('workbench.title') }}</text>
+				</view>
+				<text class="value arrow"></text>
+			</view>
+		</view>
+
 		<!-- 多语言设置 -->
 		<view class="setting-card">
 			<view class="setting-item" @click="changeLanguage">
@@ -122,6 +133,11 @@ export default {
 			} catch (err) {
 				uni.showToast({ title: t('toast.networkError'), icon: 'none' });
 			}
+		},
+
+		// 跳转工作台（非 tabBar 页面用 navigateTo）
+		goWorkbench() {
+			uni.navigateTo({ url: '/pages/workBench/workBench' });
 		},
 
 		// 头像预览
@@ -311,6 +327,15 @@ export default {
 }
 .setting-item:last-child {
 	border-bottom: none;
+}
+.item-label {
+	display: flex;
+	align-items: center;
+}
+.item-icon {
+	width: 40rpx;
+	height: 40rpx;
+	margin-right: 16rpx;
 }
 .value {
 	color: #999;

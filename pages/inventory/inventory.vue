@@ -22,7 +22,7 @@
 						<view class="detail-header">
 							<view class="detail-cell model-detail-col">Модель</view>
 							<view class="detail-cell color-col">Цвет</view>
-							<view class="detail-cell quantity-col">Кол-во</view>
+							<view class="detail-cell quantity-col">Налич./Всего</view>
 							<view class="detail-cell price-col">Цена</view>
 						</view>
 
@@ -36,7 +36,11 @@
 							<view class="detail-group-rows">
 								<view v-for="item in group.items" :key="item.id" class="detail-row-merged">
 									<view class="detail-cell color-col">{{ item.color || '-' }}</view>
-									<view class="detail-cell quantity-col">{{ item.quantity }}</view>
+									<view class="detail-cell quantity-col">
+										<text class="qty-instock">{{ item.inStock }}</text>
+										<text class="qty-sep">/</text>
+										<text class="qty-total">{{ item.quantity }}</text>
+									</view>
 									<view class="detail-cell price-col price-cell">{{ formatPrice(item.price) }}</view>
 								</view>
 							</view>
@@ -106,7 +110,8 @@ export default {
 						id: this.stringifyValue(item.id),
 						modelName: this.stringifyValue(item.modelName),
 						price: item.price,
-						quantity: Number(item.quantity || 0)
+						quantity: Number(item.quantity || 0),
+						inStock: Number(item.inStockQuantity || 0)
 					}))
 				);
 			} catch (error) {
@@ -305,12 +310,12 @@ export default {
 
 .detail-header {
 	display: grid;
-	grid-template-columns: 1fr 148rpx 108rpx 132rpx;
+	grid-template-columns: 1fr 140rpx 150rpx 132rpx;
 }
 
 .detail-group {
 	display: grid;
-	grid-template-columns: 1fr 388rpx;
+	grid-template-columns: 1fr 422rpx;
 	background: #fff;
 }
 
@@ -321,7 +326,23 @@ export default {
 
 .detail-row-merged {
 	display: grid;
-	grid-template-columns: 148rpx 108rpx 132rpx;
+	grid-template-columns: 140rpx 150rpx 132rpx;
+}
+
+/* 现车/总量 数量单元 */
+.qty-instock {
+	font-size: 26rpx;
+	font-weight: 700;
+	color: #ff6b00;
+}
+.qty-sep {
+	font-size: 22rpx;
+	color: #c8b69e;
+	margin: 0 2rpx;
+}
+.qty-total {
+	font-size: 22rpx;
+	color: #9a7a55;
 }
 
 .detail-merged-model {

@@ -44,9 +44,23 @@ import {
 } from 'vue-i18n' // v9.x
 const i18n = createI18n(i18nConfig)
 
+import { reportPageView } from '@/common/analytics.js'
+
 export function createApp() {
 	const app = createSSRApp(App)
 	app.use(i18n)
+
+	// 全局页面访问埋点：每个页面 onShow 时上报当前路径（PV/UV）
+	app.mixin({
+		onShow() {
+			const pages = getCurrentPages()
+			if (!pages.length) return
+			const cur = pages[pages.length - 1]
+			if (cur && cur.route) {
+				reportPageView('/' + cur.route)
+			}
+		}
+	})
 
 	return {
 		app

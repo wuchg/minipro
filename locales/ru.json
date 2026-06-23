@@ -3,6 +3,7 @@
   "common": {
     "loading": "Загрузка...",
     "noMore": "Больше заказов нет",
+    "noData": "Нет данных",
     "clear": "Очистить",
     "serverError": "Ошибка сервера",
     "loadFail": "Не удалось загрузить"
@@ -14,6 +15,9 @@
   "settings": {
     "language": "Язык интерфейса",
     "changePassword": "Изменить пароль"
+  },
+  "workbench": {
+    "title": "Верстак"
   },
   "language": {
     "system": "Следовать системе",
@@ -62,6 +66,12 @@
     "remark": "Примечание",
     "empty": "Нет заказов, оформите новый!",
     "orderNo": "Номер заказа",
+    "createdAt": "Дата заказа",
+    "statusAll": "Все статусы",
+    "currentStatus": "Текущий статус",
+    "pending": "В ожидании",
+    "done": "Готово",
+    "itemsUnit": "шт.",
     "searchVinLast4": "Введите последние 4 символа VIN",
     "vin": "VIN",
     "quantity": "Количество",

@@ -1,12 +1,50 @@
 <template>
 	<view class="page">
 		<view class="form-card">
-			<!-- 选择车辆 -->
+			<!-- 选择车辆（品牌 → 车系 → 车辆 两列级联） -->
 			<view class="form-item">
 				<text class="label">选择车辆</text>
-				<picker :range="cars" range-key="name" @change="onCarChange">
-					<view class="picker">{{ form.carName || '请选择车辆' }}</view>
-				</picker>
+				<view :class="['picker', 'car-trigger', showCarPanel ? 'car-trigger-open' : '']" @click="toggleCarPanel">
+					<text :class="form.carName ? '' : 'placeholder'">{{ form.carName || '请选择车辆' }}</text>
+					<text :class="['car-arrow', showCarPanel ? 'open' : '']">⌄</text>
+				</view>
+
+				<!-- 遮罩 + 级联面板 -->
+				<view v-if="showCarPanel" class="car-mask" @click="closeCarPanel"></view>
+				<view v-if="showCarPanel" class="car-cascader">
+					<!-- 左列：品牌 / 车系 -->
+					<scroll-view scroll-y class="cas-col cas-left">
+						<view v-if="!brands.length" class="cas-tip">加载中...</view>
+						<block v-for="b in brands" :key="b.id">
+							<view class="cas-brand">{{ b.name }}</view>
+							<view v-if="loadingSeries[b.id]" class="cas-tip">加载中...</view>
+							<view v-else-if="seriesByBrand[b.id] && !seriesByBrand[b.id].length" class="cas-tip">暂无车系</view>
+							<view
+								v-for="s in seriesByBrand[b.id] || []"
+								:key="s.id"
+								:class="['cas-series', activeSeriesId === s.id ? 'active' : '']"
+								@click="selectSeries(s)"
+							>
+								{{ s.name }}
+							</view>
+						</block>
+					</scroll-view>
+
+					<!-- 右列：车辆（颜色） -->
+					<scroll-view scroll-y class="cas-col cas-right">
+						<view v-if="!activeSeriesId" class="cas-tip">请选择车系</view>
+						<view v-else-if="loadingCars" class="cas-tip">加载中...</view>
+						<view v-else-if="!seriesCars.length" class="cas-tip">暂无车辆</view>
+						<view
+							v-for="c in seriesCars"
+							:key="c.id"
+							:class="['cas-car', form.carId === c.id ? 'active' : '']"
+							@click="selectCar(c)"
+						>
+							<text class="cas-car-name">{{ c.summary }}</text>
+						</view>
+					</scroll-view>
+				</view>
 			</view>
 
 			<!-- 选择业务员 -->
@@ -98,11 +136,21 @@ const cos = new COS({
 	}
 });
 import { request } from '@/common/request.js';
+// 本地调试：仅下单页走本地 api-go，其它页面仍用线上 baseUrl
+// const API_BASE = 'http://127.0.0.1:8888/api';
+// const request = (opts) => baseRequest({ ...opts, baseUrl: API_BASE });
 
 export default {
 	data() {
 		return {
-			cars: [],
+			// 选车级联：品牌 → 车系 → 车辆
+			showCarPanel: false,
+			brands: [],
+			seriesByBrand: {}, // brandId -> [series]
+			loadingSeries: {}, // brandId -> bool
+			activeSeriesId: '',
+			seriesCars: [], // 右列：当前车系下的车辆
+			loadingCars: false,
 			allTags: [], // 标签列表从后端加载
 			selectedTags: [],
 			showInput: false, // 是否显示输入框
@@ -124,7 +172,6 @@ export default {
 		};
 	},
 	onLoad() {
-		this.loadCars();
 		this.loadTags();
 		this.loadSales();
 		this.loadColorDicts();
@@ -205,19 +252,64 @@ export default {
 			this.showInput = false;
 		},
 
-		// 加载车辆
-		async loadCars() {
+		// ===== 选车级联：品牌 → 车系 → 车辆 =====
+		toggleCarPanel() {
+			this.showCarPanel = !this.showCarPanel;
+			if (this.showCarPanel && !this.brands.length) {
+				this.loadBrands();
+			}
+		},
+		closeCarPanel() {
+			this.showCarPanel = false;
+		},
+		async loadBrands() {
 			try {
-				const res = await request({ url: '/cars?page_num=1&page_size=100', method: 'GET' });
-				if (res.code === 0 && res.data && res.data.cars) {
-					this.cars = res.data.cars.map((c) => ({ id: c.id, name: c.name }));
+				const res = await request({ url: '/car-brands', method: 'GET' });
+				if (res.code === 0 && res.data && Array.isArray(res.data.brands)) {
+					this.brands = res.data.brands;
+					// 预加载各品牌车系，填充左列
+					this.brands.forEach((b) => this.loadSeries(b.id));
 				} else {
-					uni.showToast({ title: res.msg || '加载车辆失败', icon: 'none' });
+					uni.showToast({ title: res.msg || '加载品牌失败', icon: 'none' });
 				}
 			} catch (e) {
-				console.error('loadCars error', e);
+				console.error('loadBrands error', e);
 				uni.showToast({ title: '网络错误', icon: 'none' });
 			}
+		},
+		async loadSeries(brandId) {
+			if (this.seriesByBrand[brandId]) return;
+			this.$set(this.loadingSeries, brandId, true);
+			try {
+				const res = await request({ url: `/car-brands/${brandId}/series`, method: 'GET' });
+				const list = res.code === 0 && res.data && Array.isArray(res.data.series) ? res.data.series : [];
+				this.$set(this.seriesByBrand, brandId, list);
+			} catch (e) {
+				console.error('loadSeries error', e);
+				this.$set(this.seriesByBrand, brandId, []);
+			} finally {
+				this.$set(this.loadingSeries, brandId, false);
+			}
+		},
+		async selectSeries(series) {
+			if (this.activeSeriesId === series.id) return;
+			this.activeSeriesId = series.id;
+			this.seriesCars = [];
+			this.loadingCars = true;
+			try {
+				const res = await request({ url: `/car-series/${series.id}/cars`, method: 'GET' });
+				this.seriesCars = res.code === 0 && res.data && Array.isArray(res.data.cars) ? res.data.cars : [];
+			} catch (e) {
+				console.error('selectSeries error', e);
+				this.seriesCars = [];
+			} finally {
+				this.loadingCars = false;
+			}
+		},
+		selectCar(car) {
+			this.form.carId = car.id;
+			this.form.carName = car.summary;
+			this.closeCarPanel();
 		},
 
 		// 加载标签
@@ -301,14 +393,6 @@ export default {
 			} finally {
 				uni.hideLoading();
 			}
-		},
-
-		// 车辆选择
-		onCarChange(e) {
-			const index = e.detail.value;
-			const car = this.cars[index];
-			this.form.carId = car.id;
-			this.form.carName = car.name;
 		},
 
 		onSalesChange(e) {
@@ -409,6 +493,99 @@ export default {
 	border-radius: 50%;
 	border: 1rpx solid #ddd;
 	flex-shrink: 0;
+}
+
+/* 选车触发器 */
+.car-trigger {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+.car-trigger.car-trigger-open {
+	border-color: #ff7a00;
+}
+.car-trigger .placeholder {
+	color: #999;
+}
+.car-arrow {
+	color: #ff6b00;
+	font-size: 28rpx;
+	line-height: 1;
+	transition: transform 0.2s ease;
+}
+.car-arrow.open {
+	transform: rotate(180deg);
+}
+
+/* 级联面板 */
+.car-mask {
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.04);
+	z-index: 50;
+}
+.car-cascader {
+	position: relative;
+	z-index: 60;
+	display: flex;
+	margin-top: 12rpx;
+	height: 520rpx;
+	border: 1rpx solid #f0e2d3;
+	border-radius: 12rpx;
+	overflow: hidden;
+	background: #fff;
+	box-shadow: 0 10rpx 20rpx rgba(0, 0, 0, 0.06);
+}
+.cas-col {
+	height: 100%;
+	box-sizing: border-box;
+}
+.cas-left {
+	width: 46%;
+	border-right: 1rpx solid #f3dfcc;
+	background: #fffaf4;
+}
+.cas-right {
+	flex: 1;
+}
+.cas-brand {
+	padding: 16rpx 18rpx 6rpx;
+	font-size: 22rpx;
+	font-weight: 700;
+	color: #b08a63;
+}
+.cas-series {
+	padding: 18rpx 20rpx;
+	font-size: 26rpx;
+	color: #5a3c19;
+}
+.cas-series.active {
+	background: #fff1df;
+	color: #ff6b00;
+	font-weight: 600;
+}
+.cas-car {
+	display: flex;
+	flex-direction: column;
+	gap: 4rpx;
+	padding: 16rpx 20rpx;
+	border-bottom: 1rpx solid #f6ecdf;
+}
+.cas-car.active {
+	background: #fff6ec;
+}
+.cas-car-name {
+	font-size: 25rpx;
+	color: #2b2b2b;
+}
+.cas-tip {
+	padding: 30rpx;
+	text-align: center;
+	color: #b08a63;
+	font-size: 24rpx;
 }
 .textarea {
 	min-height: 160rpx;

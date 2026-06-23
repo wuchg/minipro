@@ -99,18 +99,12 @@
 				"iconPath": "static/icons/chat_gr.png",
 				"selectedIconPath": "static/icons/chat.png"
 			},
-			{
-				"pagePath": "pages/index/index",
-				"text": "Главная",
-				"iconPath": "static/icons/index_gr.png",
-				"selectedIconPath": "static/icons/index.png"
-			},
 
 			{
-				"pagePath": "pages/workBench/workBench",
-				"text": "верстак",
-				"iconPath": "static/icons/w_gr.png",
-				"selectedIconPath": "static/icons/w.png"
+				"pagePath": "pages/orders/orders",
+				"text": "Заказы",
+				"iconPath": "static/icons/order_gr.png",
+				"selectedIconPath": "static/icons/order.png"
 			}, {
 				"pagePath": "pages/profile/profile",
 				"text": "Профиль",
