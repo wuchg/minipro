@@ -39,6 +39,7 @@ export function reportPageView(path) {
 	request({
 		url: '/analytics/pageview',
 		method: 'POST',
+		timeout: 3000,
 		data: {
 			path,
 			visitorId: getVisitorId(),

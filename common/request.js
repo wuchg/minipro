@@ -37,12 +37,14 @@ function getAcceptLanguage() {
 export function request(options) {
 	const token = uni.getStorageSync('access_token') || ''
 	const acceptLanguage = getAcceptLanguage()
+	const requestUrl = (options.baseUrl || baseUrl) + options.url
 
 	return new Promise((resolve, reject) => {
 		uni.request({
-			url: (options.baseUrl || baseUrl) + options.url, // 自动拼接（可按调用传 baseUrl 覆盖）
+			url: requestUrl, // 自动拼接（可按调用传 baseUrl 覆盖）
 			method: options.method || 'GET',
 			data: options.data || {},
+			timeout: options.timeout ?? 10000,
 			header: {
 				'content-type': 'application/json',
 				'Authorization': token ? `Bearer ${token}` : '',
@@ -56,6 +58,9 @@ export function request(options) {
 				resolve(res.data)
 			},
 			fail(err) {
+				if (options.logFail !== false) {
+					console.error('[api] fail', options.url, requestUrl, err)
+				}
 				reject(err)
 			}
 		})

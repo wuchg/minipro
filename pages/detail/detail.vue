@@ -153,10 +153,10 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
 .page {
 	height: 100vh;
-	background-color: #f7f7f7;
+	background-color: $page-bg;
 }
 
 /* 顶部轮播 */
@@ -188,9 +188,9 @@ export default {
 	font-weight: 700;
 	padding: 30rpx 20rpx;
 	background-color: #fff;
-	border-radius: 16rpx;
+	border-radius: $r-lg;
 	white-space: pre-line;
-	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+	box-shadow: $shadow-card;
 }
 
 /* 通用 section */
@@ -198,15 +198,15 @@ export default {
 	margin-top: 24rpx;
 	padding: 24rpx;
 	background-color: #fff;
-	border-radius: 20rpx;
-	box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.06);
+	border-radius: $r-lg;
+	box-shadow: $shadow-card;
 }
 .section-title {
 	font-size: 32rpx;
 	font-weight: 700;
 	margin-bottom: 24rpx;
 	color: #333;
-	border-left: 8rpx solid #ff4d4f;
+	border-left: 8rpx solid $brand-strong;
 	padding-left: 16rpx;
 }
 
@@ -332,7 +332,7 @@ export default {
 .btn-primary {
 	flex: 1;
 	height: 80rpx;
-	background: #ff4d4f;
+	background: $brand-strong;
 	color: #fff;
 	border-radius: 16rpx;
 	font-size: 32rpx;
@@ -346,8 +346,8 @@ export default {
 	flex: 1;
 	height: 80rpx;
 	background: #fff;
-	border: 2rpx solid #ff4d4f;
-	color: #ff4d4f;
+	border: 2rpx solid $brand-strong;
+	color: $brand-strong;
 	border-radius: 16rpx;
 	font-size: 32rpx;
 	font-weight: bold;

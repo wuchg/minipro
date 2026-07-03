@@ -154,10 +154,11 @@ export default {
 	}
 };
 </script>
-<style scoped>
+<style lang="scss" scoped>
 .page {
 	height: 100vh; /* 必须保持固定高度 */
 	overflow: hidden;
+	background: $page-bg;
 }
 
 .content {

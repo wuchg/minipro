@@ -1,10 +1,10 @@
 {
 	"pages": [{
-			"path": "pages/inventory/inventory",
-			"style": {
-				"navigationBarTitleText": "Склад"
-			}
-		}, {
+		"path": "pages/inventory/inventory",
+		"style": {
+			"navigationBarTitleText": "Склад"
+		}
+	}, {
 			"path": "pages/index/index",
 			"style": {
 				"navigationBarTitleText": "",
@@ -90,7 +90,7 @@
 	"uniIdRouter": {},
 	"tabBar": {
 		"color": "#666666",
-		"selectedColor": "#007AFF",
+		"selectedColor": "#ff6b00",
 		"backgroundColor": "#ffffff",
 		"borderStyle": "black",
 		"list": [{

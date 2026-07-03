@@ -450,17 +450,17 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
 .page {
-	background: #f5f6f8;
+	background: $page-bg;
 	min-height: 100vh;
 	padding: 30rpx;
 }
 .form-card {
 	background: #fff;
-	border-radius: 16rpx;
+	border-radius: $r-lg;
 	padding: 30rpx;
-	box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+	box-shadow: $shadow-card;
 }
 .form-item {
 	margin-bottom: 30rpx;

@@ -66,3 +66,44 @@ $uni-spacing-col-lg: 12px;
 
 /* 透明度 */
 $uni-opacity-disabled: 0.3; // 组件禁用态的透明度
+
+/* ===== AutoBoss 设计 token（全站统一，橙色主题） ===== */
+/* 品牌 */
+$brand: #ff7a00; // 强调/accent 条
+$brand-strong: #ff6b00; // 主按钮/主文字/价格
+$brand-soft: #fff1df; // 浅橙 chip/圆点底
+$brand-surface: #fffaf4; // 暖白展开面板底
+$brand-line: #f3dfcc; // 暖描边
+$grad-btn: linear-gradient(90deg, #ff8a00, #ff6b00); // 主按钮
+$grad-header: linear-gradient(135deg, #ff9a00, #ff6b00); // 头部卡片/表头
+
+/* 文字（暖底） */
+$ink: #5a3c19;
+$ink-sub: #9a7a55;
+$ink-muted: #b39a7d;
+
+/* 中性 */
+$page-bg: #f5f6f8;
+$card-bg: #ffffff;
+$line: #eeeeee;
+
+/* 语义 */
+$danger: #ff3b30;
+$success: #27ae60;
+
+/* 圆角 / 间距 / 字号 / 阴影 / 层级 */
+$r-sm: 8rpx;
+$r-md: 12rpx;
+$r-lg: 16rpx;
+$r-pill: 999rpx;
+$sp-1: 8rpx;
+$sp-2: 16rpx;
+$sp-3: 24rpx;
+$sp-4: 32rpx;
+$fs-cap: 22rpx;
+$fs-body: 26rpx;
+$fs-sub: 30rpx;
+$fs-title: 36rpx;
+$shadow-card: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+$z-mask: 100;
+$z-popup: 110;

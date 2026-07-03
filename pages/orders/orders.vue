@@ -392,7 +392,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .page {
 	background: #f5f6f8;
 	height: 100vh;
@@ -745,7 +745,7 @@ export default {
 	top: 0;
 	bottom: 0;
 	background: rgba(0, 0, 0, 0.45);
-	z-index: 200;
+	z-index: $z-popup;
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-end;

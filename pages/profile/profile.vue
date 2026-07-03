@@ -250,16 +250,16 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
 .page {
-	background: #f0f2f5;
+	background: $page-bg;
 	min-height: 100vh;
 	padding: 30rpx;
 }
 
 /* 用户卡片 */
 .user-card {
-	background: linear-gradient(135deg, #6a11cb, #2575fc);
+	background: $grad-header;
 	display: flex;
 	align-items: center;
 	padding: 30rpx;
@@ -291,9 +291,9 @@ export default {
 .role-card {
 	background: #fff;
 	padding: 25rpx;
-	border-radius: 20rpx;
+	border-radius: $r-lg;
 	margin-bottom: 30rpx;
-	box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.08);
+	box-shadow: $shadow-card;
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
@@ -313,9 +313,9 @@ export default {
 .setting-card {
 	background: #fff;
 	padding: 25rpx;
-	border-radius: 20rpx;
+	border-radius: $r-lg;
 	margin-bottom: 30rpx;
-	box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.08);
+	box-shadow: $shadow-card;
 }
 .setting-item {
 	display: flex;
@@ -349,15 +349,15 @@ export default {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: rgba(0, 0, 0, 0.6);
+	background: rgba(0, 0, 0, 0.45);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	z-index: 1000;
+	z-index: $z-popup;
 }
 .modal-box {
 	background: #fff;
-	border-radius: 20rpx;
+	border-radius: $r-lg;
 	width: 80%;
 	padding: 40rpx;
 }
@@ -381,7 +381,7 @@ export default {
 	margin-top: 20rpx;
 }
 .btn-confirm {
-	background: #2575fc;
+	background: $brand-strong;
 	color: #fff;
 	border-radius: 10rpx;
 	padding: 12rpx 50rpx;
@@ -404,7 +404,7 @@ export default {
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
-	z-index: 999;
+	z-index: $z-popup;
 }
 .avatar-large {
 	width: 90%;
