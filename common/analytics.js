@@ -10,6 +10,28 @@ function getVisitorId() {
 	return id;
 }
 
+function getPageViewUserId() {
+	const keys = ['user_id', 'userId', 'username'];
+	for (const key of keys) {
+		const value = uni.getStorageSync(key);
+		if (value) return String(value);
+	}
+
+	if (typeof localStorage !== 'undefined') {
+		for (const key of keys) {
+			const value = localStorage.getItem(key);
+			if (value) return String(value);
+		}
+	}
+
+	return '';
+}
+
+function getPageViewToken() {
+	const token = uni.getStorageSync('access_token');
+	return token ? String(token) : '';
+}
+
 function currentPlatform() {
 	// #ifdef MP-WEIXIN
 	return 'mp-weixin';
@@ -43,7 +65,9 @@ export function reportPageView(path) {
 		data: {
 			path,
 			visitorId: getVisitorId(),
-			platform: currentPlatform()
+			platform: currentPlatform(),
+			userId: getPageViewUserId(),
+			token: getPageViewToken()
 		}
 	}).catch(() => {});
 }

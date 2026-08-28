@@ -37,7 +37,10 @@
 								<view v-for="item in group.items" :key="item.id" class="detail-row-merged">
 									<view class="detail-cell color-col color-cell" hover-class="color-cell-active" @click.stop="loadInventoryItemMedia(item)">
 										<view class="color-swatch-wrap">
-											<view class="color-swatch" :style="{ backgroundColor: colorSwatch(item.color) }"></view>
+											<view :class="['color-split-swatch', isSameColorSwatch(item) ? 'color-split-swatch-same' : '']">
+												<view class="color-split-segment color-split-exterior" :style="{ backgroundColor: colorSwatch(item.color) }"></view>
+												<view class="color-split-segment color-split-interior" :style="{ backgroundColor: colorSwatch(item.interiorColor) }"></view>
+											</view>
 											<view class="color-swatch-play-hint">
 												<view class="color-swatch-play-icon"></view>
 											</view>
@@ -206,10 +209,12 @@ export default {
 					modelId,
 					list.map((item) => {
 						const mapped = {
+							arrivalDateText: this.resolveArrivalDateText(item),
 							carId: this.resolveCarId(item),
 							color: this.resolveColor(item),
+							interiorColor: this.resolveInteriorColor(item),
 							id: this.stringifyValue(item.id),
-							modelName: this.stringifyValue(item.modelName),
+							modelName: this.stringifyValue(item.itemName),
 							price: item.price,
 							quantity: Number(item.quantity || 0),
 							inStock: Number(item.inStockQuantity || 0)
@@ -266,6 +271,41 @@ export default {
 			return this.stringifyValue(
 				item.color ||
 					this.getPayloadValue(item.payload || {}, ['颜色', '颜色/Цвет', 'Цвет', '外观颜色', '车身颜色'])
+			);
+		},
+		resolveInteriorColor(item = {}) {
+			const payload = item.payload || {};
+			return this.stringifyValue(
+				item.interiorColor ||
+					item.interior_color ||
+					item.interior ||
+					item.trimColor ||
+					item.trim_color ||
+					item.car?.interiorColor ||
+					item.car?.interior_color ||
+					item.car?.interior ||
+					this.getPayloadValue(payload, [
+						'内饰颜色',
+						'内饰色',
+						'内饰',
+						'座椅颜色',
+						'Салон',
+						'Цвет салона',
+						'Цвет интерьера',
+						'interiorColor',
+						'interior_color',
+						'interior'
+					])
+			);
+		},
+		resolveArrivalDateText(item = {}) {
+			const payload = item.payload || {};
+			return this.stringifyValue(
+				item.arrivalDateText ||
+					item.arrival_date_text ||
+					item.arrivalDate ||
+					item.arrival_date ||
+					this.getPayloadValue(payload, ['arrivalDateText', 'arrival_date_text', 'arrivalDate', 'arrival_date'])
 			);
 		},
 		resolveCarId(item = {}) {
@@ -570,11 +610,16 @@ export default {
 			});
 		},
 		formatQuantity(item = {}) {
-			if (item.isInTransit) {
-				return 'В пути';
-			}
 			const quantity = Number(item.quantity || 0);
-			return Number.isNaN(quantity) ? '-' : String(quantity);
+			if (Number.isNaN(quantity)) {
+				return '-';
+			}
+			const quantityText = String(quantity);
+			if (!item.isInTransit) {
+				return quantityText;
+			}
+			const arrivalDateText = this.stringifyValue(item.arrivalDateText).trim();
+			return arrivalDateText ? `${quantityText}（${arrivalDateText}）` : `${quantityText}（В пути）`;
 		},
 		colorSwatch(color) {
 			const text = this.stringifyValue(color).trim();
@@ -588,11 +633,21 @@ export default {
 			if (/(灰|сер|gray|grey)/i.test(lower)) return '#8f959e';
 			if (/(红|красн|red)/i.test(lower)) return '#d64545';
 			if (/(蓝|син|blue)/i.test(lower)) return '#2f6fd6';
+			if (/(紫|фиолет|сирен|пурпур|purple|violet|lilac)/i.test(lower)) return '#7e57c2';
 			if (/(绿|зелен|green)/i.test(lower)) return '#2e9d62';
 			if (/(黄|желт|yellow|金|gold)/i.test(lower)) return '#e2b33c';
 			if (/(橙|оранж|orange)/i.test(lower)) return '#ff7a00';
 			if (/(棕|корич|brown)/i.test(lower)) return '#8a5a36';
+			if (/(米|米色|беж|beige|cream|крем)/i.test(lower)) return '#d8c1a3';
 			return '#d8dbe0';
+		},
+		isSameColorSwatch(item = {}) {
+			const exteriorText = this.stringifyValue(item.color).trim();
+			const interiorText = this.stringifyValue(item.interiorColor).trim();
+			if (!exteriorText || !interiorText) {
+				return false;
+			}
+			return this.colorSwatch(exteriorText).toLowerCase() === this.colorSwatch(interiorText).toLowerCase();
 		},
 		buildGroupedItems(items = []) {
 			const groups = [];
@@ -742,12 +797,12 @@ export default {
 
 .detail-header {
 	display: grid;
-	grid-template-columns: 1fr 96rpx 96rpx 162rpx;
+	grid-template-columns: 1fr 112rpx 146rpx 144rpx;
 }
 
 .detail-group {
 	display: grid;
-	grid-template-columns: 1fr 354rpx;
+	grid-template-columns: 1fr 402rpx;
 	background: #fff;
 }
 
@@ -758,17 +813,25 @@ export default {
 
 .detail-row-merged {
 	display: grid;
-	grid-template-columns: 96rpx 96rpx 162rpx;
+	grid-template-columns: 112rpx 146rpx 144rpx;
 }
 
 .quantity-value {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 100%;
 	font-size: 26rpx;
 	font-weight: 700;
 	color: #ff6b00;
+	line-height: 1.15;
+	white-space: nowrap;
+	word-break: keep-all;
 }
 
 .in-transit {
 	color: #a66a22;
+	font-size: 22rpx;
 }
 
 .detail-merged-model {
@@ -848,13 +911,13 @@ export default {
 .detail-group-rows .color-col {
 	justify-content: flex-start;
 	text-align: left;
-	padding-left: 12rpx;
+	padding-left: 8rpx;
 }
 
 .detail-group-rows .color-cell {
+	align-items: center;
 	justify-content: center;
-	padding-left: 8rpx;
-	padding-right: 8rpx;
+	padding: 4rpx;
 }
 
 .color-cell-active {
@@ -866,8 +929,8 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 44rpx;
-	height: 44rpx;
+	width: 76rpx;
+	height: 42rpx;
 	transition: transform 0.16s ease;
 }
 
@@ -875,13 +938,31 @@ export default {
 	transform: scale(0.94);
 }
 
-.color-swatch {
-	width: 34rpx;
+.color-split-swatch {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 64rpx;
 	height: 34rpx;
 	border-radius: 8rpx;
 	border: 1rpx solid #d7c5ad;
-	box-shadow: inset 0 1rpx 2rpx rgba(255, 255, 255, 0.65), 0 2rpx 5rpx rgba(0, 0, 0, 0.08);
+	overflow: hidden;
 	box-sizing: border-box;
+}
+
+.color-split-segment {
+	flex: 1;
+	height: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+}
+
+.color-split-interior {
+	border-left: 1rpx solid rgba(122, 74, 24, 0.24);
+}
+
+.color-split-swatch-same .color-split-interior {
+	border-left: 2rpx solid rgba(255, 107, 0, 0.58);
 }
 
 .color-swatch-play-hint {
@@ -896,7 +977,6 @@ export default {
 	border-radius: 10rpx;
 	border: 1rpx solid rgba(255, 107, 0, 0.42);
 	background: #fffaf4;
-	box-shadow: 0 2rpx 6rpx rgba(122, 74, 24, 0.16);
 	box-sizing: border-box;
 }
 
@@ -912,7 +992,7 @@ export default {
 .detail-group-rows .price-col {
 	justify-content: flex-end;
 	text-align: right;
-	padding-right: 12rpx;
+	padding-right: 8rpx;
 }
 
 .empty-state,

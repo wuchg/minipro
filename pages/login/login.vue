@@ -67,6 +67,7 @@ export default {
 					if (res.data.code === 0) {
 						const data = res.data.data;
 						uni.setStorageSync('access_token', data.access_token);
+						uni.setStorageSync('username', this.username);
 						this.loginText = '登录成功';
 						setTimeout(() => {
 							const tabPages = ['/pages/inventory/inventory', '/pages/orders/orders', '/pages/profile/profile'];

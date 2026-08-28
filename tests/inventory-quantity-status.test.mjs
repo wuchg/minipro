@@ -25,6 +25,23 @@ const methods = context.component.methods;
 const inventoryContext = { ...methods };
 
 assert.match(source, /isInTransit:\s*item\.status === 0/, 'inventory rows should mark in-transit cars from status 0');
-assert.equal(methods.formatQuantity.call(inventoryContext, { isInTransit: true, quantity: 7, inStock: 2 }), 'В пути');
+assert.equal(
+	methods.resolveArrivalDateText.call(inventoryContext, { arrivalDateText: '7.27' }),
+	'7.27',
+	'inventory rows should read direct arrivalDateText values'
+);
+assert.equal(
+	methods.resolveArrivalDateText.call(inventoryContext, { payload: { arrival_date_text: '4.7' } }),
+	'4.7',
+	'inventory rows should read arrival_date_text from payload fallbacks'
+);
+assert.equal(
+	methods.formatQuantity.call(inventoryContext, { isInTransit: true, quantity: 7, arrivalDateText: '7.27', inStock: 2 }),
+	'7（7.27）'
+);
+assert.equal(
+	methods.formatQuantity.call(inventoryContext, { isInTransit: true, quantity: 7, arrivalDateText: '', inStock: 2 }),
+	'7（В пути）'
+);
 assert.equal(methods.formatQuantity.call(inventoryContext, { isInTransit: false, quantity: 7, inStock: 2 }), '7');
 assert.equal(methods.formatQuantity.call(inventoryContext, { isInTransit: false, quantity: 0, inStock: 0 }), '0');

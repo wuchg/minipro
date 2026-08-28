@@ -19,17 +19,79 @@ assert.match(
 assert.match(
 	inventorySource,
 	/class="color-swatch-play-hint"[\s\S]*<view class="color-swatch-play-icon"><\/view>/,
-	'individual color swatches should show a theme-matched play icon hint'
+	'color split swatch should show a compact play icon hint'
 );
 assert.match(
 	inventorySource,
-	/\.color-swatch-play-hint\s*\{[\s\S]*background:\s*#fffaf4;/,
-	'color swatch play hint should use a restrained warm theme chip'
+	/color-split-swatch[\s\S]*class="color-split-segment color-split-exterior"/,
+	'color cell should render one split swatch container'
+);
+assert.match(
+	inventorySource,
+	/:class="\['color-split-swatch', isSameColorSwatch\(item\) \? 'color-split-swatch-same' : ''\]"/,
+	'split swatch should add a stronger divider class only when exterior and interior map to the same color'
+);
+assert.match(
+	inventorySource,
+	/class="color-split-segment color-split-exterior"[\s\S]*backgroundColor:\s*colorSwatch\(item\.color\)/,
+	'color cell should render exterior color as the left split half'
+);
+assert.match(
+	inventorySource,
+	/class="color-split-segment color-split-interior"[\s\S]*backgroundColor:\s*colorSwatch\(item\.interiorColor\)/,
+	'color cell should render interior color as the right split half'
+);
+assert.match(
+	inventorySource,
+	/\.color-swatch-wrap\s*\{[\s\S]*position:\s*relative;[\s\S]*width:\s*76rpx;[\s\S]*height:\s*42rpx;/,
+	'color swatch wrapper should contain one compact split swatch'
+);
+assert.match(
+	inventorySource,
+	/\.detail-group-rows \.color-cell\s*\{[\s\S]*padding:\s*4rpx;/,
+	'color cells should use tight padding without letting the swatch fill the whole cell'
+);
+assert.match(
+	inventorySource,
+	/\.color-split-swatch\s*\{[\s\S]*display:\s*flex;[\s\S]*width:\s*64rpx;[\s\S]*height:\s*34rpx;[\s\S]*border-radius:\s*8rpx;[\s\S]*border:\s*1rpx solid #d7c5ad;[\s\S]*overflow:\s*hidden;/,
+	'color swatch should be one rounded split container'
+);
+assert.match(
+	inventorySource,
+	/\.color-split-segment\s*\{[\s\S]*flex:\s*1;[\s\S]*height:\s*100%;/,
+	'each split half should fill half of the unified swatch'
+);
+assert.match(
+	inventorySource,
+	/\.color-split-interior\s*\{[\s\S]*border-left:\s*1rpx solid rgba\(122, 74, 24, 0\.24\);/,
+	'split swatch should keep a subtle center divider'
+);
+assert.match(
+	inventorySource,
+	/\.color-split-swatch-same \.color-split-interior\s*\{[\s\S]*border-left:\s*2rpx solid rgba\(255, 107, 0, 0\.58\);/,
+	'same-color split swatches should use a more visible theme divider'
+);
+assert.match(
+	inventorySource,
+	/\.color-swatch-play-hint\s*\{[\s\S]*position:\s*absolute;[\s\S]*right:\s*0;[\s\S]*bottom:\s*0;[\s\S]*background:\s*#fffaf4;/,
+	'color swatch play hint should be a small warm overlay'
 );
 assert.match(
 	inventorySource,
 	/\.color-swatch-play-icon\s*\{[\s\S]*border-left:\s*6rpx solid #ff6b00;/,
 	'color swatch play icon should use the orange theme color'
+);
+assert.doesNotMatch(inventorySource, /color-swatch-frame/, 'color swatches should not use inset frames that make light and dark colors look different sizes');
+assert.doesNotMatch(inventorySource, /color-swatch-pair|class="color-swatch color-swatch-(?:exterior|interior)"/, 'color cell should not use two independent color blocks');
+assert.doesNotMatch(inventorySource, /color-infinity|∞/, 'color cell should not use the infinity glyph variant');
+assert.doesNotMatch(inventorySource, /color-infinity-core/, 'infinity color swatch should not use separate fill dots inside the glyph');
+assert.doesNotMatch(inventorySource, /color-infinity-half/, 'infinity color swatch should not be replaced by two joined pill blocks');
+assert.doesNotMatch(inventorySource, /box-shadow:/, 'infinity color swatches should not use shadows that create visual offset');
+assert.doesNotMatch(inventorySource, /min-height:\s*68rpx;[\s\S]*border-radius:\s*0;/, 'color swatch should not keep the abrupt full-cell fill style');
+assert.doesNotMatch(
+	inventorySource,
+	/color-swatch-half/,
+	'color cell should not use the previous joined half-swatch structure'
 );
 assert.doesNotMatch(inventorySource, /color-header-hint|color-header-play-icon|>Видео<\/text>|Фото|>▶<\/text>/, 'media hint should not use header text or swatch text labels');
 assert.match(inventorySource, /\/pricing-inventory\/items\/\$\{encodeURIComponent\(item\.id\)\}\/media/, 'inventory media should be loaded from the item media API');
@@ -67,6 +129,35 @@ vm.runInNewContext(`${script}\nthis.component = component;`, context);
 
 const methods = context.component.methods;
 const inventoryContext = { ...methods };
+
+assert.equal(
+	methods.resolveInteriorColor.call(inventoryContext, { interiorColor: 'black' }),
+	'black',
+	'inventory item should read direct interiorColor'
+);
+assert.equal(
+	methods.resolveInteriorColor.call(inventoryContext, { interior_color: 'red' }),
+	'red',
+	'inventory item should read snake_case interior color'
+);
+assert.equal(
+	methods.resolveInteriorColor.call(inventoryContext, { payload: { 内饰颜色: '米色' } }),
+	'米色',
+	'inventory item should read interior color from localized payload fields'
+);
+assert.equal(methods.colorSwatch.call(inventoryContext, '紫色'), '#7e57c2', 'Chinese purple color names should map to purple');
+assert.equal(methods.colorSwatch.call(inventoryContext, 'purple'), '#7e57c2', 'English purple color names should map to purple');
+assert.equal(methods.colorSwatch.call(inventoryContext, 'фиолетовый'), '#7e57c2', 'Russian purple color names should map to purple');
+assert.equal(
+	methods.isSameColorSwatch.call(inventoryContext, { color: '黑色', interiorColor: 'black' }),
+	true,
+	'same color swatch detection should compare normalized exterior and interior colors'
+);
+assert.equal(
+	methods.isSameColorSwatch.call(inventoryContext, { color: '白色', interiorColor: 'black' }),
+	false,
+	'same color swatch detection should leave different exterior and interior colors subtle'
+);
 
 const multiVideoContext = {
 	...inventoryContext,

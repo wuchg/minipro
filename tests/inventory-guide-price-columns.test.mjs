@@ -10,9 +10,11 @@ assert.doesNotMatch(source, /guide-price-col|guide-price-cell|formatPrice\(item\
 assert.doesNotMatch(source, /Рек\. цена|指导价<\/view>/, 'inventory table should not show a guide price header');
 assert.doesNotMatch(source, /displayModelName|formatModelListName|resolveGuidePrice/, 'inventory row model column should not use compact display-name helpers');
 assert.match(source, /modelName:\s*this\.stringifyValue\(item\.modelName\)/, 'inventory rows should keep the full model name in the table');
-assert.match(source, /grid-template-columns:\s*1fr 96rpx 96rpx 162rpx;/, 'detail header should keep color and quantity columns equal while widening price');
-assert.match(source, /grid-template-columns:\s*1fr 354rpx;/, 'group layout should reserve equal color and quantity columns plus the wider price column');
-assert.match(source, /grid-template-columns:\s*96rpx 96rpx 162rpx;/, 'detail rows should use equal color and quantity columns with a wider price column');
+assert.match(source, /grid-template-columns:\s*1fr 112rpx 146rpx 144rpx;/, 'detail header should give quantity more width while keeping the non-model columns balanced');
+assert.match(source, /grid-template-columns:\s*1fr 402rpx;/, 'group layout should reserve wider color and quantity columns plus the existing price column');
+assert.match(source, /grid-template-columns:\s*112rpx 146rpx 144rpx;/, 'detail rows should keep in-transit quantity text on one line without widening the whole table');
+assert.doesNotMatch(source, /grid-template-columns:\s*1fr 96rpx 96rpx 162rpx;/, 'inventory table should not keep the previous compact color and quantity columns');
+assert.doesNotMatch(source, /grid-template-columns:\s*1fr 354rpx;/, 'inventory table should not keep the previous non-model column total width');
 assert.doesNotMatch(source, /grid-template-columns:\s*1fr 84rpx 96rpx 162rpx;/, 'inventory table should not keep color narrower than quantity');
 assert.doesNotMatch(source, /grid-template-columns:\s*1fr 140rpx 150rpx 132rpx;/, 'inventory table should not keep the old wide color and quantity columns');
 assert.doesNotMatch(source, /grid-template-columns:\s*1fr 422rpx;/, 'inventory table should not keep the old non-model column total width');
@@ -23,6 +25,11 @@ const quantityHeaderStyle = source.match(/\.detail-header \.quantity-col\s*\{([\
 assert.match(quantityHeaderStyle, /white-space:\s*nowrap;/, 'quantity header should stay on one line in the compact column');
 assert.match(quantityHeaderStyle, /word-break:\s*keep-all;/, 'quantity header should not break the Russian label');
 assert.match(quantityHeaderStyle, /padding-left:\s*2rpx;/, 'quantity header should reduce horizontal padding instead of stretching the column');
+const quantityValueStyle = source.match(/\.quantity-value\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+assert.match(quantityValueStyle, /white-space:\s*nowrap;/, 'quantity value should stay on one line when transit text is present');
+assert.match(quantityValueStyle, /word-break:\s*keep-all;/, 'quantity value should keep the transit marker together');
+const inTransitStyle = source.match(/\.in-transit\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+assert.match(inTransitStyle, /font-size:\s*22rpx;/, 'in-transit quantities should use a slightly smaller font so date text fits the widened column');
 assert.doesNotMatch(
 	source,
 	/\.detail-header \.(?:model-detail-col|color-col|price-col)/,
