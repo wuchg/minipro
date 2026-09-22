@@ -2,14 +2,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const source = fs.readFileSync(new URL('../pages/inventory/inventory.vue', import.meta.url), 'utf8');
+const source = fs.readFileSync(new URL('../pages/inventoryBrand/inventoryBrand.vue', import.meta.url), 'utf8');
 const scriptMatch = source.match(/<script>([\s\S]*?)<\/script>/);
 assert.ok(scriptMatch, 'inventory.vue should contain a script block');
 
 assert.doesNotMatch(source, /guide-price-col|guide-price-cell|formatPrice\(item\.guidePrice\)/, 'inventory table should not render a guide price column');
 assert.doesNotMatch(source, /Рек\. цена|指导价<\/view>/, 'inventory table should not show a guide price header');
 assert.doesNotMatch(source, /displayModelName|formatModelListName|resolveGuidePrice/, 'inventory row model column should not use compact display-name helpers');
-assert.match(source, /modelName:\s*this\.stringifyValue\(item\.modelName\)/, 'inventory rows should keep the full model name in the table');
+assert.match(source, /modelName:\s*this\.stringifyValue\(item\.itemName \|\| item\.itemNameCn \|\| item\.modelName\)/, 'inventory rows should keep the full concrete model name in the table');
 assert.match(source, /grid-template-columns:\s*1fr 112rpx 146rpx 144rpx;/, 'detail header should give quantity more width while keeping the non-model columns balanced');
 assert.match(source, /grid-template-columns:\s*1fr 402rpx;/, 'group layout should reserve wider color and quantity columns plus the existing price column');
 assert.match(source, /grid-template-columns:\s*112rpx 146rpx 144rpx;/, 'detail rows should keep in-transit quantity text on one line without widening the whole table');

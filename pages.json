@@ -5,6 +5,11 @@
 			"navigationBarTitleText": "Склад"
 		}
 	}, {
+		"path": "pages/inventoryBrand/inventoryBrand",
+		"style": {
+			"navigationBarTitleText": "Модельный ряд"
+		}
+	}, {
 			"path": "pages/index/index",
 			"style": {
 				"navigationBarTitleText": "",

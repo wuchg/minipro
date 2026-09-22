@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const source = fs.readFileSync(new URL('../pages/inventory/inventory.vue', import.meta.url), 'utf8');
+const source = fs.readFileSync(new URL('../pages/inventoryBrand/inventoryBrand.vue', import.meta.url), 'utf8');
 const scriptMatch = source.match(/<script>([\s\S]*?)<\/script>/);
 assert.ok(scriptMatch, 'inventory.vue should contain a script block');
 
@@ -25,6 +25,7 @@ const methods = context.component.methods;
 const inventoryContext = { ...methods };
 
 assert.match(source, /isInTransit:\s*item\.status === 0/, 'inventory rows should mark in-transit cars from status 0');
+assert.match(source, /\.filter\(\(item\) => item\.quantity > 0\)/, 'inventory rows with zero quantity should not be displayed');
 assert.equal(
 	methods.resolveArrivalDateText.call(inventoryContext, { arrivalDateText: '7.27' }),
 	'7.27',

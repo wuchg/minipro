@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const inventorySource = fs.readFileSync(new URL('../pages/inventory/inventory.vue', import.meta.url), 'utf8');
+const inventorySource = fs.readFileSync(new URL('../pages/inventoryBrand/inventoryBrand.vue', import.meta.url), 'utf8');
 const pagesJson = JSON.parse(fs.readFileSync(new URL('../pages.json', import.meta.url), 'utf8'));
 
 assert.ok(
@@ -86,7 +86,8 @@ assert.doesNotMatch(inventorySource, /color-swatch-pair|class="color-swatch colo
 assert.doesNotMatch(inventorySource, /color-infinity|∞/, 'color cell should not use the infinity glyph variant');
 assert.doesNotMatch(inventorySource, /color-infinity-core/, 'infinity color swatch should not use separate fill dots inside the glyph');
 assert.doesNotMatch(inventorySource, /color-infinity-half/, 'infinity color swatch should not be replaced by two joined pill blocks');
-assert.doesNotMatch(inventorySource, /box-shadow:/, 'infinity color swatches should not use shadows that create visual offset');
+const splitSwatchStyle = inventorySource.match(/\.color-split-swatch\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+assert.doesNotMatch(splitSwatchStyle, /box-shadow:/, 'color swatches should not use shadows that create visual offset');
 assert.doesNotMatch(inventorySource, /min-height:\s*68rpx;[\s\S]*border-radius:\s*0;/, 'color swatch should not keep the abrupt full-cell fill style');
 assert.doesNotMatch(
 	inventorySource,
@@ -101,6 +102,10 @@ assert.match(inventorySource, /<image\b[\s\S]*v-for="\(imageUrl, index\) in acti
 assert.match(inventorySource, /<video\b[\s\S]*v-for="\(videoUrl, index\) in activeVideoUrls"[\s\S]*:src="videoUrl"[\s\S]*@longpress="downloadVideo\(videoUrl\)"/, 'inventory modal should render every API video vertically with long-press download');
 assert.match(inventorySource, /activeImageUrls/, 'inventory modal should support API images for one car');
 assert.match(inventorySource, /class="inventory-video"/, 'inventory video should have stable modal sizing');
+const pageScrollCloseIndex = inventorySource.indexOf('</scroll-view>');
+const mediaModalIndex = inventorySource.indexOf('<view v-if="activeInventoryItem" class="model-modal-mask"');
+assert.ok(pageScrollCloseIndex >= 0 && pageScrollCloseIndex < mediaModalIndex, 'media modal should be outside the page scroll-view so it can stay fixed to the viewport bottom');
+assert.match(inventorySource, /\.model-modal\s*\{[\s\S]*width:\s*100%;[\s\S]*env\(safe-area-inset-bottom\)/, 'media modal should span the viewport and include the bottom safe area');
 assert.match(inventorySource, /controls/, 'inventory video should expose player controls');
 assert.match(inventorySource, /activeVideoUrls/, 'inventory modal should support multiple videos for one car');
 assert.match(inventorySource, /downloadVideo\(url\)/, 'inventory modal should keep a per-video download handler');

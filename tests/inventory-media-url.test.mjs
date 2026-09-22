@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const source = fs.readFileSync(new URL('../pages/inventory/inventory.vue', import.meta.url), 'utf8');
+const source = fs.readFileSync(new URL('../pages/inventoryBrand/inventoryBrand.vue', import.meta.url), 'utf8');
 const scriptMatch = source.match(/<script>([\s\S]*?)<\/script>/);
 assert.ok(scriptMatch, 'inventory.vue should contain a script block');
 
